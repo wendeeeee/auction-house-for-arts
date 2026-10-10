@@ -1,0 +1,498 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "HealthController_getHealth",
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "description": "Correlation ID echoed in the response; generated when absent or malformed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All dependencies are up."
+          },
+          "503": {
+            "description": "A dependency is down."
+          }
+        },
+        "summary": "Liveness and database connectivity",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "UsersController_listUsers",
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "description": "Correlation ID echoed in the response; generated when absent or malformed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "handle": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "displayName",
+                          "handle"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "summary": "List the demo users for the user switcher",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "operationId": "UsersController_getCurrentUser",
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "description": "Correlation ID echoed in the response; generated when absent or malformed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "displayName": {
+                      "type": "string"
+                    },
+                    "handle": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "displayName",
+                    "handle"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No, a malformed, or an unknown X-Demo-User-Id."
+          }
+        },
+        "summary": "The user named by X-Demo-User-Id",
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/artists": {
+      "get": {
+        "operationId": "ArtistsController_listArtists",
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "description": "Correlation ID echoed in the response; generated when absent or malformed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "slug": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "bio": {
+                            "type": "string"
+                          },
+                          "royaltyBps": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Resale royalty in basis points (500 = 5%)."
+                          }
+                        },
+                        "required": [
+                          "slug",
+                          "name",
+                          "bio",
+                          "royaltyBps"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "summary": "List artists (for the catalog filter)",
+        "tags": [
+          "artists"
+        ]
+      }
+    },
+    "/api/artworks": {
+      "get": {
+        "operationId": "ArtworksController_listArtworks",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "1–100, default 50.",
+            "schema": {}
+          },
+          {
+            "name": "artist",
+            "required": false,
+            "in": "query",
+            "description": "Artist slug, e.g. amara-okafor.",
+            "schema": {}
+          },
+          {
+            "name": "medium",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Painting",
+                "Print",
+                "Photography",
+                "Sculpture",
+                "Drawing",
+                "Digital"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "query",
+            "required": false,
+            "in": "query",
+            "description": "Matches the title or the artist name, case-insensitively.",
+            "schema": {}
+          },
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "description": "Correlation ID echoed in the response; generated when absent or malformed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "slug": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "year": {
+                            "nullable": true,
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "medium": {
+                            "type": "string",
+                            "enum": [
+                              "Painting",
+                              "Print",
+                              "Photography",
+                              "Sculpture",
+                              "Drawing",
+                              "Digital"
+                            ]
+                          },
+                          "dimensions": {
+                            "type": "string"
+                          },
+                          "artist": {
+                            "type": "object",
+                            "properties": {
+                              "slug": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "slug",
+                              "name"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "saleType": {
+                            "type": "string",
+                            "enum": [
+                              "primary",
+                              "resale"
+                            ],
+                            "description": "primary: the artist owns it; resale: a collector does."
+                          }
+                        },
+                        "required": [
+                          "slug",
+                          "title",
+                          "year",
+                          "medium",
+                          "dimensions",
+                          "artist",
+                          "saleType"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "summary": "Browse the catalog, newest first",
+        "tags": [
+          "artworks"
+        ]
+      }
+    },
+    "/api/artworks/{slug}": {
+      "get": {
+        "operationId": "ArtworksController_getArtwork",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "description": "Correlation ID echoed in the response; generated when absent or malformed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "slug": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "year": {
+                      "nullable": true,
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "medium": {
+                      "type": "string",
+                      "enum": [
+                        "Painting",
+                        "Print",
+                        "Photography",
+                        "Sculpture",
+                        "Drawing",
+                        "Digital"
+                      ]
+                    },
+                    "dimensions": {
+                      "type": "string"
+                    },
+                    "artist": {
+                      "type": "object",
+                      "properties": {
+                        "slug": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "bio": {
+                          "type": "string"
+                        },
+                        "royaltyBps": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Resale royalty in basis points (500 = 5%)."
+                        }
+                      },
+                      "required": [
+                        "slug",
+                        "name",
+                        "bio",
+                        "royaltyBps"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "saleType": {
+                      "type": "string",
+                      "enum": [
+                        "primary",
+                        "resale"
+                      ],
+                      "description": "primary: the artist owns it; resale: a collector does."
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "ownerUserId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    }
+                  },
+                  "required": [
+                    "slug",
+                    "title",
+                    "year",
+                    "medium",
+                    "dimensions",
+                    "artist",
+                    "saleType",
+                    "description",
+                    "ownerUserId"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ARTWORK_NOT_FOUND"
+          }
+        },
+        "summary": "One artwork, with its artist",
+        "tags": [
+          "artworks"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Art Auction House API",
+    "description": "Real-time auctions for original art. Errors use `{ error: { code, message, details, correlationId } }`. Identity is a demo switcher: send `X-Demo-User-Id` with a user ID from `GET /api/users`.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {}
+  }
+}

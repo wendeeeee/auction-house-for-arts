@@ -1,0 +1,82 @@
+# Local infrastructure. The apps run on the host; only their dependencies run here.
+# Host ports are offset so this stack runs alongside the older project (see CLAUDE.md).
+name: art-auction
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: art_auction
+      POSTGRES_PASSWORD: art_auction
+      POSTGRES_DB: art_auction
+    ports:
+      - "55442:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U art_auction -d art_auction"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - "56380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4.1-management
+    environment:
+      RABBITMQ_DEFAULT_USER: art_auction
+      RABBITMQ_DEFAULT_PASS: art_auction
+    ports:
+      - "56727:5672"
+      - "15677:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  # The official minio/minio image is no longer published; pgsty/minio is a community build
+  # of the same MinIO source, so the S3 API and console are unchanged.
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: art_auction
+      MINIO_ROOT_PASSWORD: art_auction_secret
+    ports:
+      - "59000:9000"
+      - "59001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || curl -fsS http://localhost:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    ports:
+      - "16697:16686"
+      - "4328:4318"
+    healthcheck:
+      # Jaeger v2 exposes the collector health check extension on 13133.
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:13133/status || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  minio-data:

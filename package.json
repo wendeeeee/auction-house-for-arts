@@ -1,0 +1,32 @@
+{
+  "name": "art-auction-house",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A real-time auction marketplace for original art.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "infra:up": "docker compose up -d --wait",
+    "infra:down": "docker compose down",
+    "db:reset": "npm run db:reset -w server",
+    "migrate": "npm run migrate -w server",
+    "seed": "npm run seed -w server",
+    "dev": "concurrently --names api,worker,web --prefix-colors blue,magenta,green \"npm run dev:api -w server\" \"npm run dev:worker -w server\" \"npm run dev -w web\"",
+    "start": "npm run infra:up && npm run migrate && npm run seed:if-empty -w server && npm run dev",
+    "typecheck": "npm run typecheck -w server && npm run typecheck -w web",
+    "test": "npm run test -w server",
+    "test:integration": "npm run test:integration -w server",
+    "test:e2e": "npm run test:e2e -w server",
+    "test:web": "npm run test -w web",
+    "docs:openapi": "npm run docs:openapi -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5"
+  }
+}
