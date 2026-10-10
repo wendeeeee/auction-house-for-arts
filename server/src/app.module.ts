@@ -7,6 +7,7 @@ import { ConfigModule } from './config';
 import { DatabaseModule } from './database';
 import { ArtistsModule } from './modules/artists';
 import { ArtworksModule } from './modules/artworks';
+import { AuctionsModule } from './modules/auctions';
 import { HealthModule } from './modules/health';
 import { UsersModule } from './modules/users';
 
@@ -20,6 +21,7 @@ import { UsersModule } from './modules/users';
     UsersModule,
     ArtistsModule,
     ArtworksModule,
+    AuctionsModule,
   ],
   providers: [
     // Global: every route resolves X-Demo-User-Id; @RequireUser() routes also reject anonymous.

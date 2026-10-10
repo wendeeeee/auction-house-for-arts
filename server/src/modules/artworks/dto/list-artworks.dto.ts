@@ -1,14 +1,8 @@
 import { z } from 'zod';
+import { blankAsAbsent } from '../../../common/validation';
 import { ARTWORK_MEDIUMS } from '../artworks.types';
 
 const SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-
-/** Query strings send `?medium=` for "no filter": trim, and treat blank as absent. */
-function blankAsAbsent(value: unknown): unknown {
-  if (typeof value !== 'string') return value;
-  const trimmed = value.trim();
-  return trimmed === '' ? undefined : trimmed;
-}
 
 export const DEFAULT_ARTWORK_PAGE_SIZE = 50;
 export const MAXIMUM_ARTWORK_PAGE_SIZE = 100;

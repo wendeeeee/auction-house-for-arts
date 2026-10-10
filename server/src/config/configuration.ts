@@ -13,11 +13,17 @@ export interface TracingConfig {
   readonly isDisabled: boolean;
 }
 
+export interface AuctionsConfig {
+  /** A price or leader change this close to `ends_at` pushes the end out to `acceptedAt + window`. */
+  readonly softCloseWindowSeconds: number;
+}
+
 export interface AppConfig {
   readonly nodeEnvironment: NodeEnvironment;
   readonly api: { readonly port: number };
   readonly database: DatabaseConfig;
   readonly tracing: TracingConfig;
+  readonly auctions: AuctionsConfig;
 }
 
 /** Thrown at boot. Not a DomainError: there is no request to answer, only a process to stop. */
@@ -43,6 +49,8 @@ const environmentSchema = z.object({
     .enum(['true', 'false'], { error: 'must be "true" or "false"' })
     .optional()
     .transform((value) => value === 'true'),
+  // Capped at an hour: a longer window would keep every busy auction open far past its stated end.
+  SOFT_CLOSE_WINDOW_SECONDS: z.coerce.number().int().min(1).max(3_600).default(120),
 });
 
 /**
@@ -67,6 +75,7 @@ export function loadConfiguration(environment: NodeJS.ProcessEnv): AppConfig {
       exporterEndpoint: values.OTEL_EXPORTER_OTLP_ENDPOINT,
       isDisabled: values.OTEL_SDK_DISABLED,
     },
+    auctions: { softCloseWindowSeconds: values.SOFT_CLOSE_WINDOW_SECONDS },
   };
 }
 

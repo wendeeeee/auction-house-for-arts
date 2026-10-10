@@ -3,7 +3,7 @@ import { InvariantViolationError } from '../../common/errors';
 import { Artist, ArtistsService } from '../artists';
 import { ArtworkRepository } from './artwork.repository';
 import { ArtworkNotFoundError } from './artworks.errors';
-import { Artwork } from './artworks.types';
+import { Artwork, ArtworkMedium } from './artworks.types';
 import { ListArtworksQuery } from './dto/list-artworks.dto';
 
 export interface ArtworkWithArtist {
@@ -51,6 +51,21 @@ export class ArtworkCatalogService {
     const [withArtist] = await this.attachArtists([artwork]);
     if (!withArtist) throw new InvariantViolationError('attachArtists dropped an artwork.', { slug });
     return withArtist;
+  }
+
+  /** For other modules (auctions). Missing IDs are simply absent from the result. */
+  async findArtworksByIds(ids: readonly string[]): Promise<ArtworkWithArtist[]> {
+    return this.attachArtists(await this.artworkRepository.findByIds([...new Set(ids)]));
+  }
+
+  /** For the auction list's `?artwork=` filter: null when there is no such artwork. */
+  async findArtworkIdBySlug(slug: string): Promise<string | null> {
+    return (await this.artworkRepository.findBySlug(slug))?.id ?? null;
+  }
+
+  /** For the auction list's `?medium=` filter, so the auctions module never reads `artworks`. */
+  findArtworkIdsByMedium(medium: ArtworkMedium): Promise<string[]> {
+    return this.artworkRepository.findIdsByMedium(medium);
   }
 
   private async attachArtists(artworks: readonly Artwork[]): Promise<ArtworkWithArtist[]> {

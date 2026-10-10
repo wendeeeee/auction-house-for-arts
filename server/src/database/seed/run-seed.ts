@@ -1,9 +1,11 @@
 import { loadConfiguration } from '../../config';
 import { createDatabasePool } from '../database-pool';
+import { seedDemoAuctions } from './seed-auctions';
 import { isCatalogEmpty, seedCatalog } from './seed-catalog';
 
 /**
- * `npm run seed`: inserts any missing demo rows.
+ * `npm run seed`: inserts any missing demo rows, including the demo auctions (ending hours to
+ * days after the seed runs).
  * `npm run seed:if-empty`: does nothing if any user exists (used by `npm start`, so a database
  * you have been using is never touched).
  */
@@ -17,8 +19,10 @@ async function main(): Promise<void> {
       return;
     }
     const result = await seedCatalog(pool);
+    const { auctionsInserted } = await seedDemoAuctions(pool, new Date());
     console.log(
-      `seed: inserted ${result.usersInserted} users, ${result.artistsInserted} artists, ${result.artworksInserted} artworks`,
+      `seed: inserted ${result.usersInserted} users, ${result.artistsInserted} artists, ` +
+        `${result.artworksInserted} artworks, ${auctionsInserted} auctions`,
     );
   } finally {
     await pool.end();

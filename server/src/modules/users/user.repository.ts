@@ -24,6 +24,14 @@ export class UserRepository implements IdentityLookup {
     return rows[0] ? toUser(rows[0]) : null;
   }
 
+  async findByIds(ids: readonly string[]): Promise<User[]> {
+    if (ids.length === 0) return [];
+    const { rows } = await this.unitOfWork
+      .client()
+      .query<UserRow>(`SELECT ${USER_COLUMNS} FROM users WHERE id = ANY($1::uuid[])`, [ids]);
+    return rows.map(toUser);
+  }
+
   async listAll(): Promise<User[]> {
     const { rows } = await this.unitOfWork
       .client()

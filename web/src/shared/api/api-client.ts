@@ -19,24 +19,33 @@ export interface RequestOptions {
 
 export interface ApiClient {
   get<T>(path: string, options?: RequestOptions): Promise<T>;
+  /** Sends `body` as JSON. */
+  post<T>(path: string, body: unknown, options?: RequestOptions): Promise<T>;
 }
 
 export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   const baseUrl = options.baseUrl ?? '/api';
   const getDemoUserId = options.getDemoUserId ?? (() => null);
 
-  async function request<T>(method: string, path: string, requestOptions: RequestOptions = {}): Promise<T> {
+  async function request<T>(
+    method: string,
+    path: string,
+    requestOptions: RequestOptions = {},
+    body?: unknown,
+  ): Promise<T> {
     // Looked up per call (not captured at creation) so tests can stub the global fetch.
     const fetchImplementation = options.fetchImplementation ?? globalThis.fetch;
     const headers: Record<string, string> = { Accept: 'application/json' };
     const demoUserId = getDemoUserId();
     if (demoUserId) headers[DEMO_USER_HEADER] = demoUserId;
+    if (body !== undefined) headers['Content-Type'] = 'application/json';
 
     let response: Response;
     try {
       response = await fetchImplementation(`${baseUrl}${path}${toQueryString(requestOptions.query)}`, {
         method,
         headers,
+        body: body === undefined ? undefined : JSON.stringify(body),
         signal: requestOptions.signal,
       });
     } catch (error) {
@@ -49,7 +58,10 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
     throw await toApiError(response);
   }
 
-  return { get: (path, requestOptions) => request('GET', path, requestOptions) };
+  return {
+    get: (path, requestOptions) => request('GET', path, requestOptions),
+    post: (path, body, requestOptions) => request('POST', path, requestOptions, body),
+  };
 }
 
 /** Blank and missing values are left out, so `?medium=` never reaches the server. */
