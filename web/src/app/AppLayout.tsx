@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { OutbidToasts } from '../features/auctions/OutbidToasts';
 import { DemoUserSwitcher } from '../features/demo-user/DemoUserSwitcher';
+import { useDemoUserId } from '../features/demo-user/use-demo-user-id';
 import { NotificationBell } from '../features/notifications/NotificationBell';
 import { NotificationsProvider } from '../features/notifications/NotificationsProvider';
 import { OutcomeDialog } from '../features/notifications/OutcomeDialog';
@@ -31,6 +32,7 @@ function Wordmark({ inverted = false }: { inverted?: boolean }) {
 }
 
 function NavigationLinks({ className }: { className: string }) {
+  const demoUserId = useDemoUserId();
   return (
     <>
       {NAVIGATION.map((item) =>
@@ -43,6 +45,11 @@ function NavigationLinks({ className }: { className: string }) {
             {item.label}
           </a>
         ),
+      )}
+      {demoUserId !== null && (
+        <NavLink to="/earnings" className={className}>
+          Earnings
+        </NavLink>
       )}
     </>
   );

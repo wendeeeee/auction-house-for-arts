@@ -99,7 +99,12 @@ export type AuctionOutcomeView =
       readonly youWon: boolean;
     };
 
-export type NotificationKind = 'seller_auction_closed' | 'bidder_auction_won' | 'bidder_reserve_not_met';
+export type NotificationKind =
+  | 'seller_auction_closed'
+  | 'bidder_auction_won'
+  | 'bidder_reserve_not_met'
+  | 'seller_purchase_paid'
+  | 'artist_royalty_earned';
 
 export interface NotificationView {
   readonly id: string;
@@ -108,6 +113,8 @@ export interface NotificationView {
   readonly artworkTitle: string;
   readonly outcome: AuctionOutcome;
   readonly hammerPriceCents: number | null;
+  /** Set on payment notifications: the recipient's proceeds or royalty. */
+  readonly earnedCents: number | null;
   readonly createdAt: string;
   readonly readAt: string | null;
 }
@@ -115,4 +122,39 @@ export interface NotificationView {
 export interface NotificationListView {
   readonly items: readonly NotificationView[];
   readonly unreadCount: number;
+}
+
+export interface StartedCheckoutView {
+  readonly purchaseId: string;
+  readonly amountCents: number;
+  readonly currency: 'usd';
+  readonly checkoutUrl: string;
+}
+
+export type PaymentStatus = 'awaiting_payment' | 'paid';
+
+export type CheckoutStatusView =
+  | {
+      readonly role: 'buyer';
+      readonly status: PaymentStatus;
+      readonly purchaseId: string | null;
+      readonly amountCents: number;
+      readonly currency: 'usd';
+      readonly paidAt: string | null;
+    }
+  | { readonly role: 'seller'; readonly status: PaymentStatus };
+
+export interface EarningsEntryView {
+  readonly purchaseId: string;
+  readonly accountKind: 'seller_payable' | 'artist_payable';
+  readonly earnedCents: number;
+  readonly memo: string;
+  readonly postedAt: string;
+}
+
+export interface EarningsView {
+  readonly currency: 'usd';
+  readonly sellerProceedsCents: number;
+  readonly artistRoyaltiesCents: number;
+  readonly recentEntries: readonly EarningsEntryView[];
 }

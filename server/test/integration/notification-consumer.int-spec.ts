@@ -100,6 +100,7 @@ describe('AuctionClosed notification consumer', () => {
         artworkTitle: 'Harbour at Noon',
         outcome: 'sold',
         hammerPriceCents: 310_00,
+        earnedCents: null,
         createdAt: START.toISOString(),
         readAt: null,
       },

@@ -28,6 +28,28 @@ export interface AuctionsConfig {
   readonly softCloseWindowSeconds: number;
 }
 
+export interface LedgerConfig {
+  /** The platform's commission on every sale, in basis points (1,000 = 10%). */
+  readonly platformFeeBps: number;
+}
+
+export interface StripeConfig {
+  /** A test-mode key (`sk_test_…`); live keys are refused at boot. */
+  readonly secretKey: string;
+  /** The signing secret of the webhook endpoint (`whsec_…`), from `stripe listen` locally. */
+  readonly webhookSecret: string;
+}
+
+export interface PaymentsConfig {
+  /** Null when no Stripe keys are set: checkout answers 503 and the rest of the app works. */
+  readonly stripe: StripeConfig | null;
+}
+
+export interface WebConfig {
+  /** Where the web app is served; checkout returns the buyer here. */
+  readonly baseUrl: string;
+}
+
 export interface AppConfig {
   readonly nodeEnvironment: NodeEnvironment;
   readonly api: { readonly port: number };
@@ -36,6 +58,9 @@ export interface AppConfig {
   readonly redis: RedisConfig;
   readonly messaging: MessagingConfig;
   readonly auctions: AuctionsConfig;
+  readonly ledger: LedgerConfig;
+  readonly payments: PaymentsConfig;
+  readonly web: WebConfig;
 }
 
 /** Thrown at boot. Not a DomainError: there is no request to answer, only a process to stop. */
@@ -73,6 +98,23 @@ const environmentSchema = z.object({
     .transform((value) => value === 'true'),
   // Capped at an hour: a longer window would keep every busy auction open far past its stated end.
   SOFT_CLOSE_WINDOW_SECONDS: z.coerce.number().int().min(1).max(3_600).default(120),
+  // Capped at 50%: with the 20% royalty cap, a seller's proceeds can never go negative.
+  PLATFORM_FEE_BPS: z.coerce.number().int().min(0).max(5_000).default(1_000),
+  // Test mode only: this project never moves real money.
+  STRIPE_SECRET_KEY: z.string().startsWith('sk_test_', { error: 'must be a Stripe test-mode key (sk_test_…)' }).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_', { error: 'must be a Stripe webhook signing secret (whsec_…)' }).optional(),
+  WEB_BASE_URL: z.url({ error: 'must be an http(s) URL' }).default('http://localhost:5201'),
+});
+
+/** Half a Stripe configuration would accept checkouts whose payments could never be confirmed. */
+const environmentSchemaWithRules = environmentSchema.superRefine((values, context) => {
+  if ((values.STRIPE_SECRET_KEY === undefined) !== (values.STRIPE_WEBHOOK_SECRET === undefined)) {
+    context.addIssue({
+      code: 'custom',
+      path: [values.STRIPE_SECRET_KEY === undefined ? 'STRIPE_SECRET_KEY' : 'STRIPE_WEBHOOK_SECRET'],
+      message: 'must be set together with the other Stripe variable (or neither, to run without payments)',
+    });
+  }
 });
 
 /**
@@ -81,7 +123,7 @@ const environmentSchema = z.object({
  * message that lists everything to fix, instead of one variable per restart.
  */
 export function loadConfiguration(environment: NodeJS.ProcessEnv): AppConfig {
-  const result = environmentSchema.safeParse(withoutEmptyValues(environment));
+  const result = environmentSchemaWithRules.safeParse(withoutEmptyValues(environment));
   if (!result.success) {
     throw new InvalidConfigurationError(
       result.error.issues.map((issue) => `${issue.path.join('.')} ${issue.message}`),
@@ -100,6 +142,14 @@ export function loadConfiguration(environment: NodeJS.ProcessEnv): AppConfig {
     redis: { url: values.REDIS_URL },
     messaging: { rabbitMqUrl: values.RABBITMQ_URL },
     auctions: { softCloseWindowSeconds: values.SOFT_CLOSE_WINDOW_SECONDS },
+    ledger: { platformFeeBps: values.PLATFORM_FEE_BPS },
+    payments: {
+      stripe:
+        values.STRIPE_SECRET_KEY !== undefined && values.STRIPE_WEBHOOK_SECRET !== undefined
+          ? { secretKey: values.STRIPE_SECRET_KEY, webhookSecret: values.STRIPE_WEBHOOK_SECRET }
+          : null,
+    },
+    web: { baseUrl: values.WEB_BASE_URL.replace(/\/+$/, '') },
   };
 }
 

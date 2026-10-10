@@ -77,6 +77,14 @@ export class ArtworkRepository {
     return rows.map(toArtwork);
   }
 
+  /** Compare-and-set on the current owner: false when the artwork is no longer `fromUserId`'s. */
+  async transferOwnership(artworkId: string, fromUserId: string, toUserId: string): Promise<boolean> {
+    const { rowCount } = await this.unitOfWork
+      .requireTransaction()
+      .query('UPDATE artworks SET owner_user_id = $3 WHERE id = $1 AND owner_user_id = $2', [artworkId, fromUserId, toUserId]);
+    return rowCount === 1;
+  }
+
   async findIdsByMedium(medium: ArtworkMedium): Promise<string[]> {
     const { rows } = await this.unitOfWork
       .client()

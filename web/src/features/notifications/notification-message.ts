@@ -12,11 +12,32 @@ export function describeNotification(notification: NotificationView): Notificati
   const { artworkTitle: title, outcome, hammerPriceCents } = notification;
   const price = hammerPriceCents === null ? null : formatCents(hammerPriceCents);
 
+  const earned = notification.earnedCents === null ? null : formatCents(notification.earnedCents);
+
   if (notification.kind === 'bidder_auction_won') {
     return {
       label: 'You won',
       headline: price === null ? `You won ${title}` : `You won ${title} for ${price}`,
-      detail: 'Your maximum bid was the highest. Payment opens from the auction page.',
+      detail: 'Your maximum bid was the highest. Pay now to complete your purchase.',
+      isPositive: true,
+    };
+  }
+  if (notification.kind === 'seller_purchase_paid') {
+    return {
+      label: 'Paid',
+      headline: `${title}: payment received`,
+      detail:
+        earned === null
+          ? 'The buyer has paid and the work now belongs to them.'
+          : `The buyer paid${price === null ? '' : ` ${price}`}. ${earned} has been added to your earnings.`,
+      isPositive: true,
+    };
+  }
+  if (notification.kind === 'artist_royalty_earned') {
+    return {
+      label: 'Royalty',
+      headline: earned === null ? `You earned a royalty on ${title}` : `You earned a ${earned} royalty`,
+      detail: `${title} was resold${price === null ? '' : ` for ${price}`}. Your resale royalty is in your earnings.`,
       isPositive: true,
     };
   }

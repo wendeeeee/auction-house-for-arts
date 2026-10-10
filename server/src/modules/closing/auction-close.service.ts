@@ -11,7 +11,7 @@ import { AUCTION_CLOSED_EVENT, AuctionClosedEvent, REALTIME_EMITTER, RealtimeEmi
 import { UsersService } from '../users';
 import { AuctionCloseRepository } from './auction-close.repository';
 import { AuctionOutcomeDecision, decideAuctionOutcome } from './auction-outcome';
-import { AuctionClose, CloseAttemptResult, CloseDueAuctionsSummary } from './closing.types';
+import { AuctionClose, AuctionResult, CloseAttemptResult, CloseDueAuctionsSummary } from './closing.types';
 
 const CLOSE_BATCH_SIZE = 50;
 
@@ -125,6 +125,28 @@ export class AuctionCloseService {
       winnerHandle = winner.handle;
     }
     return { close, winnerHandle, viewerUserId: viewer?.id ?? null };
+  }
+
+  async getAuctionResultBySlug(auctionSlug: string): Promise<AuctionResult> {
+    const auction = await this.auctionClosing.findAuctionBySlug(auctionSlug);
+    if (!auction) throw new AuctionNotFoundError(auctionSlug);
+    return this.toAuctionResult(auction);
+  }
+
+  async getAuctionResultById(auctionId: string): Promise<AuctionResult> {
+    const auction = await this.auctionClosing.findAuctionById(auctionId);
+    if (!auction) throw new InvariantViolationError('No auction with this ID.', { auctionId });
+    return this.toAuctionResult(auction);
+  }
+
+  private async toAuctionResult(auction: Auction): Promise<AuctionResult> {
+    return {
+      auctionId: auction.id,
+      auctionSlug: auction.slug,
+      artworkId: auction.artworkId,
+      sellerUserId: auction.sellerUserId,
+      close: await this.auctionCloseRepository.findByAuctionId(auction.id),
+    };
   }
 
   /** Best effort, after commit (ADR 0002). */

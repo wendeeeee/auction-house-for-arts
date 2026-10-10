@@ -49,6 +49,15 @@ export const SEED_AUCTIONS: readonly SeedAuction[] = [
     reservePriceCents: null,
     endsInSeconds: 10 * MINUTE_SECONDS,
   },
+  {
+    // Bid within a minute of seeding to try checkout; a primary sale by Amara Okafor.
+    id: auctionId(5),
+    slug: 'harmattan-light-lot-5',
+    artworkSlug: 'harmattan-light',
+    startingPriceCents: 50_00,
+    reservePriceCents: null,
+    endsInSeconds: MINUTE_SECONDS,
+  },
 ];
 
 /**

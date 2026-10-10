@@ -79,6 +79,7 @@ describe('notifications API', () => {
           artworkTitle: 'Desert Geometry',
           outcome: 'sold',
           hammerPriceCents: 450_00,
+          earnedCents: null,
           createdAt: CLOSED_AT.toISOString(),
           readAt: null,
         },

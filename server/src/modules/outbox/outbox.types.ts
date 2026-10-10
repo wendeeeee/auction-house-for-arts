@@ -32,17 +32,42 @@ export const auctionClosedPayloadSchema = z
   });
 export type AuctionClosedPayload = z.infer<typeof auctionClosedPayloadSchema>;
 
+export const purchasePaidPayloadSchema = z
+  .object({
+    purchaseId: z.uuid(),
+    auctionId: z.uuid(),
+    auctionSlug: z.string().min(1),
+    artworkTitle: z.string().min(1),
+    buyerUserId: z.uuid(),
+    sellerUserId: z.uuid(),
+    artistUserId: z.uuid(),
+    saleType: z.enum(['primary', 'resale']),
+    amountCents: z.number().int().positive(),
+    platformFeeCents: z.number().int().nonnegative(),
+    artistRoyaltyCents: z.number().int().nonnegative(),
+    sellerProceedsCents: z.number().int().nonnegative(),
+    paidAt: z.iso.datetime(),
+  })
+  .refine((event) => event.platformFeeCents + event.artistRoyaltyCents + event.sellerProceedsCents === event.amountCents, {
+    message: 'the split must add up to the amount paid',
+    path: ['sellerProceedsCents'],
+  });
+export type PurchasePaidPayload = z.infer<typeof purchasePaidPayloadSchema>;
+
 export interface OutboxEventPayloads {
   readonly AuctionClosed: AuctionClosedPayload;
+  readonly PurchasePaid: PurchasePaidPayload;
 }
 export type OutboxEventType = keyof OutboxEventPayloads;
 
 export const OUTBOX_EVENT_PAYLOAD_SCHEMAS: { readonly [Type in OutboxEventType]: z.ZodType<OutboxEventPayloads[Type]> } = {
   AuctionClosed: auctionClosedPayloadSchema,
+  PurchasePaid: purchasePaidPayloadSchema,
 };
 
 export const OUTBOX_EVENT_ROUTING_KEYS: { readonly [Type in OutboxEventType]: string } = {
   AuctionClosed: 'auction.closed',
+  PurchasePaid: 'purchase.paid',
 };
 
 export const isOutboxEventType = (type: string): type is OutboxEventType => Object.hasOwn(OUTBOX_EVENT_ROUTING_KEYS, type);
