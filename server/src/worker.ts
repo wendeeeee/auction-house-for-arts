@@ -16,9 +16,7 @@ async function bootstrap(): Promise<void> {
   const logger = new Logger('Worker');
   logger.log('worker started');
 
-  // With nothing registered yet there is no open handle, and Node exits when the event loop is
-  // empty (a pending promise or a signal listener does not count). The timer holds the process
-  // open until a stop signal; then the shutdown hooks (pool, spans) run and it exits.
+  // Holds the process open until a stop signal, whatever is registered; then the shutdown hooks run.
   const keepAlive = setInterval(() => undefined, 60_000);
   const signal = await new Promise<NodeJS.Signals>((resolve) => {
     process.once('SIGTERM', () => resolve('SIGTERM'));

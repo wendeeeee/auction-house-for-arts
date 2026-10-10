@@ -23,6 +23,7 @@ jobs:
       TEST_DATABASE_URL: postgres://art_auction:art_auction@localhost:5432/art_auction_test
       # The Socket.IO Redis adapter; one integration test runs two API instances against it.
       REDIS_URL: redis://localhost:6379
+      RABBITMQ_URL: amqp://art_auction:art_auction@localhost:5672
       # Tests never reach the network: no Jaeger in CI.
       OTEL_SDK_DISABLED: 'true'
 
@@ -52,6 +53,20 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
+
+      rabbitmq:
+        # Same image as docker-compose.yml.
+        image: rabbitmq:4.1-management
+        env:
+          RABBITMQ_DEFAULT_USER: art_auction
+          RABBITMQ_DEFAULT_PASS: art_auction
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 12
 
     steps:
       - uses: actions/checkout@v4

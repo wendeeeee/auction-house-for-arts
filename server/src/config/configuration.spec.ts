@@ -20,6 +20,7 @@ describe('loadConfiguration', () => {
       database: { url: DATABASE_URL, poolMax: 10 },
       tracing: { serviceName: undefined, exporterEndpoint: 'http://localhost:4328', isDisabled: false },
       redis: { url: 'redis://localhost:56380' },
+      messaging: { rabbitMqUrl: 'amqp://art_auction:art_auction@localhost:56727' },
       auctions: { softCloseWindowSeconds: 120 },
     });
   });
@@ -31,6 +32,7 @@ describe('loadConfiguration', () => {
       DATABASE_URL: 'postgresql://user:secret@db:5432/art',
       DATABASE_POOL_MAX: '25',
       REDIS_URL: 'rediss://cache:6380',
+      RABBITMQ_URL: 'amqps://user:secret@broker:5671',
       OTEL_SERVICE_NAME: 'custom-name',
       OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector:4318',
       OTEL_SDK_DISABLED: 'true',
@@ -42,6 +44,7 @@ describe('loadConfiguration', () => {
       database: { url: 'postgresql://user:secret@db:5432/art', poolMax: 25 },
       tracing: { serviceName: 'custom-name', exporterEndpoint: 'http://collector:4318', isDisabled: true },
       redis: { url: 'rediss://cache:6380' },
+      messaging: { rabbitMqUrl: 'amqps://user:secret@broker:5671' },
       auctions: { softCloseWindowSeconds: 30 },
     });
   });
@@ -62,6 +65,7 @@ describe('loadConfiguration', () => {
       DATABASE_URL: 'mysql://localhost/art',
       DATABASE_POOL_MAX: '0',
       REDIS_URL: 'http://localhost:6379',
+      RABBITMQ_URL: 'http://localhost:5672',
       OTEL_SDK_DISABLED: 'yes',
       SOFT_CLOSE_WINDOW_SECONDS: '0',
     });
@@ -71,6 +75,7 @@ describe('loadConfiguration', () => {
       'DATABASE_URL',
       'DATABASE_POOL_MAX',
       'REDIS_URL',
+      'RABBITMQ_URL',
       'OTEL_SDK_DISABLED',
       'SOFT_CLOSE_WINDOW_SECONDS',
     ]);

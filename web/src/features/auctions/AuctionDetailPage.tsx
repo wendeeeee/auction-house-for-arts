@@ -7,6 +7,7 @@ import { formatCents } from '../../shared/format/money';
 import { ErrorState, LoadingState } from '../../shared/ui/StatusMessage';
 import { ArtworkImage } from '../artworks/ArtworkImage';
 import { useDemoUserId } from '../demo-user/use-demo-user-id';
+import { AuctionOutcomePanel } from './AuctionOutcomePanel';
 import { getAuction } from './auctions-api';
 import { Countdown } from './Countdown';
 import { MaximumBidForm } from './MaximumBidForm';
@@ -21,8 +22,8 @@ const dateTimeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium',
 export function AuctionDetailPage() {
   const { slug = '' } = useParams();
   const demoUserId = useDemoUserId();
-  // Bumped to refetch: after your own bid, and when anyone's bid changes the auction. The
-  // viewer is part of the key: the detail shows your own maximum.
+  // Bumped to refetch: after your own bid, and when anyone's bid changes or closes the auction.
+  // The viewer is part of the key: the detail shows your own maximum.
   const [refreshCount, setRefreshCount] = useState(0);
   const auction = useApiQuery(`auction:${slug}:${demoUserId ?? 'anonymous'}:${refreshCount}`, (signal) =>
     getAuction(slug, signal),
@@ -59,16 +60,25 @@ export function AuctionDetailPage() {
     return <LoadingState label="Loading the auction" />;
   }
 
-  return <AuctionDetail auction={shown} isAnonymous={demoUserId === null} onBidPlaced={() => setRefreshCount((count) => count + 1)} />;
+  return (
+    <AuctionDetail
+      auction={shown}
+      isAnonymous={demoUserId === null}
+      refreshKey={refreshCount}
+      onBidPlaced={() => setRefreshCount((count) => count + 1)}
+    />
+  );
 }
 
 function AuctionDetail({
   auction,
   isAnonymous,
+  refreshKey,
   onBidPlaced,
 }: {
   auction: AuctionDetailView;
   isAnonymous: boolean;
+  refreshKey: number;
   onBidPlaced: () => void;
 }) {
   const now = useNow();
@@ -122,9 +132,16 @@ function AuctionDetail({
               ` · extended ${auction.extensionCount} ${auction.extensionCount === 1 ? 'time' : 'times'} by late bids (originally ${timeFormat.format(new Date(auction.originalEndsAt))})`}
           </p>
 
+          {hasEnded && <AuctionOutcomePanel slug={auction.slug} refreshKey={refreshKey} />}
+
           {auction.yourMaxBidCents !== null && (
             <p className={`auction-panel__yours${auction.youAreLeading ? ' auction-panel__yours--leading' : ''}`}>
-              {auction.youAreLeading ? 'You’re the highest bidder.' : 'You’ve been outbid.'} Your maximum:{' '}
+              {auction.youAreLeading
+                ? hasEnded
+                  ? 'You were the highest bidder.'
+                  : 'You’re the highest bidder.'
+                : 'You’ve been outbid.'}{' '}
+              Your maximum:{' '}
               <span className="auction-panel__amount">{formatCents(auction.yourMaxBidCents)}</span>
             </p>
           )}

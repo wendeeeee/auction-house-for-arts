@@ -1,7 +1,11 @@
+import type { NotificationView } from '../api/api-types';
+
 /** The server's real-time contract (server/src/modules/realtime/realtime.types.ts). */
 
 export const AUCTION_CHANGED_EVENT = 'auction:changed';
 export const USER_OUTBID_EVENT = 'user:outbid';
+export const AUCTION_CLOSED_EVENT = 'auction:closed';
+export const NOTIFICATION_CREATED_EVENT = 'notification:created';
 export const WATCH_AUCTION_MESSAGE = 'auction:watch';
 export const UNWATCH_AUCTION_MESSAGE = 'auction:unwatch';
 
@@ -12,6 +16,12 @@ export interface AuctionChangedEvent {
   readonly endsAt: string;
   readonly extended: boolean;
 }
+
+export interface AuctionClosedEvent {
+  readonly slug: string;
+}
+
+export type NotificationCreatedEvent = NotificationView;
 
 export interface UserOutbidEvent {
   readonly slug: string;

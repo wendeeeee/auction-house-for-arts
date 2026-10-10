@@ -118,6 +118,41 @@ export class AuctionRepository {
     );
   }
 
+  /** No lock, so possibly stale: the closer re-checks `ends_at` after locking. */
+  async findDueForClosingIds(now: Date, limit: number): Promise<string[]> {
+    const { rows } = await this.unitOfWork.client().query<{ id: string }>(
+      `SELECT id FROM auctions
+        WHERE closed_at IS NULL AND ends_at <= $1
+        ORDER BY ends_at, id
+        LIMIT $2`,
+      [now, limit],
+    );
+    return rows.map((row) => row.id);
+  }
+
+  /**
+   * The bidding lock (see bidding.service.ts). SKIP LOCKED: a row held by a bid or another
+   * worker is left for the next poll instead of queueing on it.
+   */
+  async lockUnclosedForClosing(auctionId: string): Promise<Auction | null> {
+    const { rows } = await this.unitOfWork
+      .requireTransaction()
+      .query<AuctionRow>(
+        `SELECT ${AUCTION_COLUMNS} FROM auctions WHERE id = $1 AND closed_at IS NULL FOR UPDATE SKIP LOCKED`,
+        [auctionId],
+      );
+    return rows[0] ? toAuction(rows[0]) : null;
+  }
+
+  async markClosed(auctionId: string, closedAt: Date): Promise<void> {
+    const { rowCount } = await this.unitOfWork
+      .requireTransaction()
+      .query('UPDATE auctions SET closed_at = $2 WHERE id = $1 AND closed_at IS NULL', [auctionId, closedAt]);
+    if (rowCount !== 1) {
+      throw new InvariantViolationError('Marking an auction closed changed no row; was the lock held?', { auctionId });
+    }
+  }
+
   async list(filter: AuctionListFilter): Promise<Auction[]> {
     const conditions: string[] = [];
     const parameters: unknown[] = [];
