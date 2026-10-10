@@ -73,6 +73,32 @@ describe('api client', () => {
     expect(fetchImplementation.mock.calls[0]?.[0]).toBe('/api/artworks?medium=Print&limit=20');
   });
 
+  it('posts a JSON body with the demo user header', async () => {
+    const { client, fetchImplementation } = clientReturning(jsonResponse(201, { leading: true }), DEMO_USER_ID);
+
+    await expect(client.post('/auctions/tide-vessel-abc123/bids', { maxBidCents: 500_00 })).resolves.toEqual({
+      leading: true,
+    });
+
+    const [url, init] = fetchImplementation.mock.calls[0] ?? [];
+    expect(url).toBe('/api/auctions/tide-vessel-abc123/bids');
+    expect(init?.method).toBe('POST');
+    expect(init?.body).toBe('{"maxBidCents":50000}');
+    expect(sentHeaders(fetchImplementation)).toMatchObject({
+      'Content-Type': 'application/json',
+      'X-Demo-User-Id': DEMO_USER_ID,
+    });
+  });
+
+  it('sends no body or content type on a GET', async () => {
+    const { client, fetchImplementation } = clientReturning(jsonResponse(200, {}));
+
+    await client.get('/auctions');
+
+    expect(fetchImplementation.mock.calls[0]?.[1]?.body).toBeUndefined();
+    expect(sentHeaders(fetchImplementation)).not.toHaveProperty('Content-Type');
+  });
+
   it('returns the parsed body on success', async () => {
     const { client } = clientReturning(jsonResponse(200, { items: [{ slug: 'tide-vessel' }] }));
 

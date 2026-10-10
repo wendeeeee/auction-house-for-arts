@@ -68,6 +68,21 @@ export class ArtworkRepository {
       .query<ArtworkRow>(`SELECT ${ARTWORK_COLUMNS} FROM artworks WHERE slug = $1`, [slug]);
     return rows[0] ? toArtwork(rows[0]) : null;
   }
+
+  async findByIds(ids: readonly string[]): Promise<Artwork[]> {
+    if (ids.length === 0) return [];
+    const { rows } = await this.unitOfWork
+      .client()
+      .query<ArtworkRow>(`SELECT ${ARTWORK_COLUMNS} FROM artworks WHERE id = ANY($1::uuid[])`, [ids]);
+    return rows.map(toArtwork);
+  }
+
+  async findIdsByMedium(medium: ArtworkMedium): Promise<string[]> {
+    const { rows } = await this.unitOfWork
+      .client()
+      .query<{ id: string }>('SELECT id FROM artworks WHERE medium = $1', [medium]);
+    return rows.map((row) => row.id);
+  }
 }
 
 function toArtwork(row: ArtworkRow): Artwork {

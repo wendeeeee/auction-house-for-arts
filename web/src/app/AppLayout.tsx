@@ -5,6 +5,7 @@ import { CloseIcon, MenuIcon } from '../shared/ui/icons';
 
 /** Section links point at anchors on the landing page; plain <a> so the browser scrolls to them. */
 const NAVIGATION = [
+  { label: 'Auctions', to: '/auctions', isRoute: true },
   { label: 'Catalog', to: '/artworks', isRoute: true },
   { label: 'How bidding works', to: '/#how-to-bid', isRoute: false },
   { label: 'Artists', to: '/#artists', isRoute: false },

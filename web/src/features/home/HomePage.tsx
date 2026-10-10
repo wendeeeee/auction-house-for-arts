@@ -110,13 +110,13 @@ function HeroSection() {
         </div>
 
         <aside className="hero__status card">
-          <p className="card__title">No auctions are live yet</p>
+          <p className="card__title">Bidding is open</p>
           <p className="card__body">
-            Bidding opens with the next release. Until then, the whole catalog is on view: see what is coming up for
-            auction and which artists earn a royalty when their work is resold.
+            Set the most you would pay and we bid for you, only as much as needed to lead. A late bid extends the
+            auction, so no one wins by sniping.
           </p>
-          <Link className="text-link" to="/artworks">
-            Explore the catalog
+          <Link className="text-link" to="/auctions">
+            See live auctions
           </Link>
         </aside>
       </div>
@@ -264,7 +264,7 @@ function TrustSection({ highestRoyaltyBps }: { highestRoyaltyBps: number | null 
                 </li>
               ))}
             </ol>
-            <p className="bid-record__note">Example record. Live bidding arrives in the next release.</p>
+            <p className="bid-record__note">Example record. Each live auction shows its own.</p>
           </div>
         </div>
       </div>

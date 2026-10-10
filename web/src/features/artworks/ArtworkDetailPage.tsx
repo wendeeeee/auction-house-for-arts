@@ -1,14 +1,22 @@
 import { Link, useParams } from 'react-router';
 import { isApiErrorWithCode } from '../../shared/api/api-error';
 import { formatBasisPointsAsPercent } from '../../shared/format/basis-points';
+import { formatCents } from '../../shared/format/money';
 import { useApiQuery } from '../../shared/api/use-api-query';
 import { ErrorState, LoadingState } from '../../shared/ui/StatusMessage';
+import { listAuctions } from '../auctions/auctions-api';
+import { PutUpForAuctionForm } from '../auctions/PutUpForAuctionForm';
+import { useDemoUserId } from '../demo-user/use-demo-user-id';
 import { ArtworkImage } from './ArtworkImage';
 import { getArtwork } from './artworks-api';
 
 export function ArtworkDetailPage() {
   const { slug = '' } = useParams();
   const artwork = useApiQuery(`artwork:${slug}`, (signal) => getArtwork(slug, signal));
+  const openAuctions = useApiQuery(`artwork-auctions:${slug}`, (signal) =>
+    listAuctions({ artwork: slug, status: 'open' }, signal),
+  );
+  const demoUserId = useDemoUserId();
 
   if (artwork.status === 'loading') return <LoadingState label="Loading the artwork" />;
 
@@ -30,6 +38,8 @@ export function ArtworkDetailPage() {
   }
 
   const work = artwork.data;
+  const openAuction = openAuctions.status === 'success' ? openAuctions.data.items[0] : undefined;
+  const isOwner = demoUserId !== null && demoUserId === work.ownerUserId;
   return (
     <article className="artwork-detail">
       <div className="artwork-detail__image">
@@ -64,6 +74,17 @@ export function ArtworkDetailPage() {
         </dl>
 
         {work.description && <p className="artwork-detail__description">{work.description}</p>}
+
+        {openAuction && (
+          <Link to={`/auctions/${openAuction.slug}`} className="auction-panel card card--raised card--interactive auction-link">
+            <span className="mono-label mono-label--gold">At auction now</span>
+            <span className="auction-link__price">
+              {openAuction.bidCount === 0 ? 'Starting at' : 'Current bid'} {formatCents(openAuction.priceCents)}
+            </span>
+            <span className="text-link">Go to the auction →</span>
+          </Link>
+        )}
+        {openAuctions.status === 'success' && !openAuction && isOwner && <PutUpForAuctionForm artworkSlug={work.slug} />}
 
         <section className="artist-note">
           <h2 className="artist-note__heading">About the artist</h2>

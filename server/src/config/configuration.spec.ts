@@ -19,6 +19,7 @@ describe('loadConfiguration', () => {
       api: { port: 4101 },
       database: { url: DATABASE_URL, poolMax: 10 },
       tracing: { serviceName: undefined, exporterEndpoint: 'http://localhost:4328', isDisabled: false },
+      auctions: { softCloseWindowSeconds: 120 },
     });
   });
 
@@ -31,12 +32,14 @@ describe('loadConfiguration', () => {
       OTEL_SERVICE_NAME: 'custom-name',
       OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector:4318',
       OTEL_SDK_DISABLED: 'true',
+      SOFT_CLOSE_WINDOW_SECONDS: '30',
     });
     expect(config).toEqual({
       nodeEnvironment: 'production',
       api: { port: 8080 },
       database: { url: 'postgresql://user:secret@db:5432/art', poolMax: 25 },
       tracing: { serviceName: 'custom-name', exporterEndpoint: 'http://collector:4318', isDisabled: true },
+      auctions: { softCloseWindowSeconds: 30 },
     });
   });
 
@@ -56,6 +59,7 @@ describe('loadConfiguration', () => {
       DATABASE_URL: 'mysql://localhost/art',
       DATABASE_POOL_MAX: '0',
       OTEL_SDK_DISABLED: 'yes',
+      SOFT_CLOSE_WINDOW_SECONDS: '0',
     });
     expect(problems.map((problem) => problem.split(' ')[0])).toEqual([
       'NODE_ENV',
@@ -63,6 +67,7 @@ describe('loadConfiguration', () => {
       'DATABASE_URL',
       'DATABASE_POOL_MAX',
       'OTEL_SDK_DISABLED',
+      'SOFT_CLOSE_WINDOW_SECONDS',
     ]);
     expect(problems).toContain('DATABASE_URL must be a postgres:// connection URL');
   });
