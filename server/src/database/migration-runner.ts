@@ -5,10 +5,7 @@ import type { Pool, PoolClient } from 'pg';
 
 export const MIGRATIONS_DIRECTORY = join(__dirname, 'migrations');
 
-/**
- * Arbitrary but fixed: every runner takes this advisory lock, so two processes started at once
- * (two API replicas, or `npm start` while CI migrates) apply migrations one after the other.
- */
+
 const MIGRATION_ADVISORY_LOCK_KEY = 4_101_001;
 
 const MIGRATION_FILE_PATTERN = /^(\d{3})_[a-z0-9_]+\.sql$/;
@@ -23,7 +20,6 @@ export interface MigrationRunOptions {
   readonly log?: (message: string) => void;
 }
 
-/** These run from the CLI and tests, never inside a request, so they are plain Errors. */
 export class MigrationFailedError extends Error {
   constructor(
     readonly migration: string,

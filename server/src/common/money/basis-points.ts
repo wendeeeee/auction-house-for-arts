@@ -10,15 +10,11 @@ export enum RoundingMode {
   DOWN = 'DOWN',
   /** Nearest cent; exactly half a cent goes up. */
   HALF_UP = 'HALF_UP',
-  /** Nearest cent; exactly half a cent goes to the even cent ("banker's rounding"). */
+  /** Nearest cent; exactly half a cent goes to the even cent. */
   HALF_EVEN = 'HALF_EVEN',
 }
 
-/**
- * The project's one rounding rule for money. Half-even has no systematic bias, so across many
- * royalty and fee calculations neither side collects the half-cents. Callers round once, at
- * the boundary where an exact share becomes a stored amount, and pass this mode explicitly.
- */
+
 export const MONEY_ROUNDING_MODE = RoundingMode.HALF_EVEN;
 
 export function assertBasisPoints(value: unknown, field = 'basisPoints'): number {

@@ -11,6 +11,9 @@ export enum ErrorCode {
   UNAUTHENTICATED = 'UNAUTHENTICATED',
   FORBIDDEN = 'FORBIDDEN',
   ROUTE_NOT_FOUND = 'ROUTE_NOT_FOUND',
+  /** Any other 4xx raised by the framework (unsupported media type, payload too large, …). */
+  REQUEST_REJECTED = 'REQUEST_REJECTED',
+  ARTWORK_NOT_FOUND = 'ARTWORK_NOT_FOUND',
 
   // 500: our bug, never the client's fault
   INVARIANT_VIOLATION = 'INVARIANT_VIOLATION',

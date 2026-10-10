@@ -1,7 +1,6 @@
 import { DomainError } from './domain-error';
 import { ErrorCode } from './error-code';
 
-/** One field that failed validation, addressed by its dotted path (`medium`, `items.0.title`). */
 export interface FieldError {
   readonly path: string;
   readonly message: string;
@@ -21,7 +20,7 @@ export class InvalidAmountError extends DomainError {
   readonly httpStatus = 400;
 }
 
-/** No usable identity was presented. Deliberately does not say which part was wrong. */
+/** No usable identity was presented. */
 export class UnauthenticatedError extends DomainError {
   readonly code = ErrorCode.UNAUTHENTICATED;
   readonly httpStatus = 401;
@@ -39,8 +38,7 @@ export class RouteNotFoundError extends DomainError {
 }
 
 /**
- * A broken assumption in our own code. Raised loudly instead of clamping or guessing; the
- * filter answers with a generic 500 and logs the message, which never reaches the client.
+ * A broken assumption in our own code.
  */
 export class InvariantViolationError extends DomainError {
   readonly code = ErrorCode.INVARIANT_VIOLATION;

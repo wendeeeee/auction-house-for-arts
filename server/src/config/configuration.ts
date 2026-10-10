@@ -8,7 +8,6 @@ export interface DatabaseConfig {
 }
 
 export interface TracingConfig {
-  /** Undefined means "use the process's own default" (art-auction-api or art-auction-worker). */
   readonly serviceName: string | undefined;
   readonly exporterEndpoint: string;
   readonly isDisabled: boolean;

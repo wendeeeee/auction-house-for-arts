@@ -15,8 +15,7 @@ import { UnitOfWork } from './unit-of-work';
           connectionString: config.database.url,
           max: config.database.poolMax,
         });
-        // An idle client can error (the server restarted). Without a listener, pg's 'error'
-        // event would crash the process; the pool already discards the broken client.
+        
         pool.on('error', (error) => new Logger('DatabasePool').error(`Idle client error: ${error.message}`));
         return pool;
       },

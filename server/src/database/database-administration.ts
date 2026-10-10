@@ -1,9 +1,6 @@
 import { Client } from 'pg';
 
-/**
- * Database-level operations (create, drop) must run from a connection to a *different*
- * database, so these connect to the server's `postgres` maintenance database.
- */
+
 function maintenanceConnectionString(databaseUrl: string): { connectionString: string; databaseName: string } {
   const url = new URL(databaseUrl);
   const databaseName = decodeURIComponent(url.pathname.replace(/^\//, ''));
@@ -12,7 +9,6 @@ function maintenanceConnectionString(databaseUrl: string): { connectionString: s
   return { connectionString: url.toString(), databaseName };
 }
 
-/** Double-quotes an identifier; names come from our own config, but quoting keeps them literal. */
 function quoteIdentifier(name: string): string {
   return `"${name.replaceAll('"', '""')}"`;
 }
@@ -35,7 +31,6 @@ export async function createDatabaseIfMissing(databaseUrl: string): Promise<bool
     try {
       await client.query(`CREATE DATABASE ${quoteIdentifier(databaseName)}`);
     } catch (error) {
-      // Another process created it between the check and the CREATE.
       if ((error as { code?: string }).code !== '42P04') throw error;
       return false;
     }
@@ -43,7 +38,6 @@ export async function createDatabaseIfMissing(databaseUrl: string): Promise<bool
   });
 }
 
-/** Drops (disconnecting any sessions) and recreates the database. Development and tests only. */
 export async function recreateDatabase(databaseUrl: string): Promise<void> {
   const { connectionString, databaseName } = maintenanceConnectionString(databaseUrl);
   await withMaintenanceClient(connectionString, async (client) => {
