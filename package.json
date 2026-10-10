@@ -17,6 +17,7 @@
     "db:reset": "npm run db:reset -w server",
     "migrate": "npm run migrate -w server",
     "seed": "npm run seed -w server",
+    "seed:images": "npm run seed:images -w server",
     "dev": "concurrently --names api,worker,web --prefix-colors blue,magenta,green \"npm run dev:api -w server\" \"npm run dev:worker -w server\" \"npm run dev -w web\"",
     "start": "npm run infra:up && npm run migrate && npm run seed:if-empty -w server && npm run dev",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w web",

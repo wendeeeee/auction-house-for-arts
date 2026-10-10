@@ -16,6 +16,54 @@ export interface ArtistView {
   readonly royaltyBps: number;
 }
 
+export interface ImageVariantView {
+  /** Stable and cacheable: the bytes behind a URL never change. */
+  readonly url: string;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface ArtworkImageView {
+  readonly id: string;
+  readonly isCover: boolean;
+  /** WebP, at most 400 px wide. */
+  readonly small: ImageVariantView;
+  /** WebP, at most 1,600 px wide. */
+  readonly large: ImageVariantView;
+}
+
+export type ImageStatus = 'pending' | 'processing' | 'ready' | 'rejected';
+
+export type ImageRejectionReason =
+  | 'file_too_large'
+  | 'not_an_image'
+  | 'unsupported_format'
+  | 'too_many_pixels'
+  | 'animated'
+  | 'upload_missing';
+
+/** The owner's view of an image, in any status. */
+export interface ManagedArtworkImageView {
+  readonly id: string;
+  readonly status: ImageStatus;
+  readonly rejectionReason: ImageRejectionReason | null;
+  readonly position: number;
+  readonly isCover: boolean;
+  readonly small: ImageVariantView | null;
+  readonly large: ImageVariantView | null;
+  readonly createdAt: string;
+}
+
+export interface StartedImageUploadView {
+  readonly image: ManagedArtworkImageView;
+  readonly upload: {
+    readonly method: 'PUT';
+    readonly url: string;
+    readonly headers: Readonly<Record<string, string>>;
+    readonly expiresAt: string;
+  };
+}
+
 export interface ArtworkSummaryView {
   readonly slug: string;
   readonly title: string;
@@ -24,12 +72,16 @@ export interface ArtworkSummaryView {
   readonly dimensions: string;
   readonly artist: { readonly slug: string; readonly name: string };
   readonly saleType: 'primary' | 'resale';
+  /** Null until an image is processed; the card shows the placeholder. */
+  readonly coverImage: ArtworkImageView | null;
 }
 
 export interface ArtworkDetailView extends Omit<ArtworkSummaryView, 'artist'> {
   readonly description: string;
   readonly ownerUserId: string;
   readonly artist: ArtistView;
+  /** Processed images in gallery order. */
+  readonly images: readonly ArtworkImageView[];
 }
 
 export interface ListView<T> {

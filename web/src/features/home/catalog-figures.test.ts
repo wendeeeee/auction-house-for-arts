@@ -4,7 +4,7 @@ import { formatBasisPointsAsPercent } from '../../shared/format/basis-points';
 import { computeCatalogFigures } from './catalog-figures';
 
 function artwork(slug: string, medium: ArtworkSummaryView['medium'], saleType: ArtworkSummaryView['saleType']): ArtworkSummaryView {
-  return { slug, title: slug, year: 2024, medium, dimensions: '1 × 1 cm', artist: { slug: 'a', name: 'A' }, saleType };
+  return { slug, title: slug, year: 2024, medium, dimensions: '1 × 1 cm', artist: { slug: 'a', name: 'A' }, saleType, coverImage: null };
 }
 
 function artist(slug: string, royaltyBps: number): ArtistView {

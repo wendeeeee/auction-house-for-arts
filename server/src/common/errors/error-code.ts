@@ -18,6 +18,7 @@ export enum ErrorCode {
   ARTWORK_NOT_FOUND = 'ARTWORK_NOT_FOUND',
   AUCTION_NOT_FOUND = 'AUCTION_NOT_FOUND',
   NOTIFICATION_NOT_FOUND = 'NOTIFICATION_NOT_FOUND',
+  IMAGE_NOT_FOUND = 'IMAGE_NOT_FOUND',
   /** 403: only the artwork's current owner may put it up for auction. */
   NOT_ARTWORK_OWNER = 'NOT_ARTWORK_OWNER',
   /** 403: only the winner can pay for an auction. */
@@ -39,6 +40,12 @@ export enum ErrorCode {
   PURCHASE_ALREADY_PAID = 'PURCHASE_ALREADY_PAID',
   /** The buyer completed checkout; the provider's confirmation has not arrived yet. */
   PAYMENT_IN_PROGRESS = 'PAYMENT_IN_PROGRESS',
+  /** Pending, processing, and ready images all count; rejected ones do not. */
+  IMAGE_LIMIT_REACHED = 'IMAGE_LIMIT_REACHED',
+  /** Only a processed image can be the cover. */
+  IMAGE_NOT_READY = 'IMAGE_NOT_READY',
+  /** A reorder must list every image of the artwork exactly once. */
+  INVALID_IMAGE_ORDER = 'INVALID_IMAGE_ORDER',
 
   // 500: our bug, never the client's fault
   INVARIANT_VIOLATION = 'INVARIANT_VIOLATION',

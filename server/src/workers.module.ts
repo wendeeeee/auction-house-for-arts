@@ -4,6 +4,7 @@ import { TracingModule } from './common/tracing';
 import { ConfigModule } from './config';
 import { DatabaseModule } from './database';
 import { AuctionClosePoller, ClosingModule } from './modules/closing';
+import { ImageProcessingConsumer, ImagesModule } from './modules/images';
 import { AuctionClosedConsumer, NotificationsModule, PurchasePaidConsumer } from './modules/notifications';
 import { OutboxPublisherPoller, OutboxPublishingModule } from './modules/outbox';
 
@@ -20,7 +21,8 @@ import { OutboxPublisherPoller, OutboxPublishingModule } from './modules/outbox'
     ClosingModule,
     OutboxPublishingModule,
     NotificationsModule,
+    ImagesModule,
   ],
-  providers: [AuctionClosePoller, OutboxPublisherPoller, AuctionClosedConsumer, PurchasePaidConsumer],
+  providers: [AuctionClosePoller, OutboxPublisherPoller, AuctionClosedConsumer, PurchasePaidConsumer, ImageProcessingConsumer],
 })
 export class WorkersModule {}

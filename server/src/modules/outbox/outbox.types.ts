@@ -54,20 +54,29 @@ export const purchasePaidPayloadSchema = z
   });
 export type PurchasePaidPayload = z.infer<typeof purchasePaidPayloadSchema>;
 
+export const imageUploadedPayloadSchema = z.object({
+  imageId: z.uuid(),
+  artworkId: z.uuid(),
+});
+export type ImageUploadedPayload = z.infer<typeof imageUploadedPayloadSchema>;
+
 export interface OutboxEventPayloads {
   readonly AuctionClosed: AuctionClosedPayload;
   readonly PurchasePaid: PurchasePaidPayload;
+  readonly ImageUploaded: ImageUploadedPayload;
 }
 export type OutboxEventType = keyof OutboxEventPayloads;
 
 export const OUTBOX_EVENT_PAYLOAD_SCHEMAS: { readonly [Type in OutboxEventType]: z.ZodType<OutboxEventPayloads[Type]> } = {
   AuctionClosed: auctionClosedPayloadSchema,
   PurchasePaid: purchasePaidPayloadSchema,
+  ImageUploaded: imageUploadedPayloadSchema,
 };
 
 export const OUTBOX_EVENT_ROUTING_KEYS: { readonly [Type in OutboxEventType]: string } = {
   AuctionClosed: 'auction.closed',
   PurchasePaid: 'purchase.paid',
+  ImageUploaded: 'image.uploaded',
 };
 
 export const isOutboxEventType = (type: string): type is OutboxEventType => Object.hasOwn(OUTBOX_EVENT_ROUTING_KEYS, type);

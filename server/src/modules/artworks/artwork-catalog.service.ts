@@ -1,14 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InvariantViolationError } from '../../common/errors';
 import { Artist, ArtistsService } from '../artists';
+import { ArtworkImage, ArtworkImageQueryService } from '../images';
 import { ArtworkRepository } from './artwork.repository';
-import { ArtworkNotFoundError } from './artworks.errors';
+import { ArtworkNotFoundError, ArtworkOwnerOnlyError } from './artworks.errors';
 import { Artwork, ArtworkMedium } from './artworks.types';
 import { ListArtworksQuery } from './dto/list-artworks.dto';
 
 export interface ArtworkWithArtist {
   readonly artwork: Artwork;
   readonly artist: Artist;
+  /** Ready images only, in gallery order. */
+  readonly images: readonly ArtworkImage[];
 }
 
 /**
@@ -21,6 +24,7 @@ export class ArtworkCatalogService {
   constructor(
     private readonly artworkRepository: ArtworkRepository,
     private readonly artistsService: ArtistsService,
+    private readonly imageQueryService: ArtworkImageQueryService,
   ) {}
 
   async listArtworks(query: ListArtworksQuery): Promise<ArtworkWithArtist[]> {
@@ -42,20 +46,28 @@ export class ArtworkCatalogService {
       artistId,
       limit: query.limit,
     });
-    return this.attachArtists(artworks);
+    return this.attachArtistsAndImages(artworks);
   }
 
   async getArtworkBySlug(slug: string): Promise<ArtworkWithArtist> {
     const artwork = await this.artworkRepository.findBySlug(slug);
     if (!artwork) throw new ArtworkNotFoundError(slug);
-    const [withArtist] = await this.attachArtists([artwork]);
-    if (!withArtist) throw new InvariantViolationError('attachArtists dropped an artwork.', { slug });
+    const [withArtist] = await this.attachArtistsAndImages([artwork]);
+    if (!withArtist) throw new InvariantViolationError('attachArtistsAndImages dropped an artwork.', { slug });
     return withArtist;
+  }
+
+  /** The artwork's ID, once `userId` is confirmed as its current owner. */
+  async getArtworkIdForOwner(slug: string, userId: string): Promise<string> {
+    const artwork = await this.artworkRepository.findBySlug(slug);
+    if (!artwork) throw new ArtworkNotFoundError(slug);
+    if (artwork.ownerUserId !== userId) throw new ArtworkOwnerOnlyError(slug);
+    return artwork.id;
   }
 
   /** For other modules (auctions). Missing IDs are simply absent from the result. */
   async findArtworksByIds(ids: readonly string[]): Promise<ArtworkWithArtist[]> {
-    return this.attachArtists(await this.artworkRepository.findByIds([...new Set(ids)]));
+    return this.attachArtistsAndImages(await this.artworkRepository.findByIds([...new Set(ids)]));
   }
 
   /** For the auction list's `?artwork=` filter: null when there is no such artwork. */
@@ -68,8 +80,11 @@ export class ArtworkCatalogService {
     return this.artworkRepository.findIdsByMedium(medium);
   }
 
-  private async attachArtists(artworks: readonly Artwork[]): Promise<ArtworkWithArtist[]> {
-    const artists = await this.artistsService.findArtistsByIds(artworks.map((artwork) => artwork.artistId));
+  private async attachArtistsAndImages(artworks: readonly Artwork[]): Promise<ArtworkWithArtist[]> {
+    const [artists, imagesByArtworkId] = await Promise.all([
+      this.artistsService.findArtistsByIds(artworks.map((artwork) => artwork.artistId)),
+      this.imageQueryService.findReadyImagesByArtworkIds(artworks.map((artwork) => artwork.id)),
+    ]);
     const artistsById = new Map(artists.map((artist) => [artist.id, artist]));
     return artworks.map((artwork) => {
       const artist = artistsById.get(artwork.artistId);
@@ -77,7 +92,7 @@ export class ArtworkCatalogService {
       if (!artist) {
         throw new InvariantViolationError('Artwork references a missing artist.', { artworkId: artwork.id });
       }
-      return { artwork, artist };
+      return { artwork, artist, images: imagesByArtworkId.get(artwork.id) ?? [] };
     });
   }
 }

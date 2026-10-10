@@ -25,6 +25,13 @@ describe('loadConfiguration', () => {
       ledger: { platformFeeBps: 1_000 },
       payments: { stripe: null },
       web: { baseUrl: 'http://localhost:5201' },
+      storage: {
+        endpoint: 'http://localhost:59000',
+        region: 'us-east-1',
+        accessKeyId: 'art_auction',
+        secretAccessKey: 'art_auction_secret',
+        bucket: 'artwork-images',
+      },
     });
   });
 
@@ -44,6 +51,11 @@ describe('loadConfiguration', () => {
       STRIPE_SECRET_KEY: 'sk_test_example',
       STRIPE_WEBHOOK_SECRET: 'whsec_example',
       WEB_BASE_URL: 'https://art.example.com/',
+      S3_ENDPOINT: 'https://storage.example.com/',
+      S3_REGION: 'eu-west-1',
+      S3_ACCESS_KEY_ID: 'access',
+      S3_SECRET_ACCESS_KEY: 'secret',
+      S3_BUCKET: 'art-images',
     });
     expect(config).toEqual({
       nodeEnvironment: 'production',
@@ -56,6 +68,13 @@ describe('loadConfiguration', () => {
       ledger: { platformFeeBps: 1_250 },
       payments: { stripe: { secretKey: 'sk_test_example', webhookSecret: 'whsec_example' } },
       web: { baseUrl: 'https://art.example.com' },
+      storage: {
+        endpoint: 'https://storage.example.com',
+        region: 'eu-west-1',
+        accessKeyId: 'access',
+        secretAccessKey: 'secret',
+        bucket: 'art-images',
+      },
     });
   });
 
@@ -106,6 +125,10 @@ describe('loadConfiguration', () => {
       'STRIPE_WEBHOOK_SECRET must be set together with the other Stripe variable (or neither, to run without payments)',
     ]);
     expect(problems.join(' ')).not.toContain('sk_test_example');
+  });
+
+  it('rejects a bucket name S3 would refuse', () => {
+    expect(problemsFor({ DATABASE_URL, S3_BUCKET: 'Artwork_Images' })).toEqual(['S3_BUCKET must be a valid S3 bucket name']);
   });
 
   it('ignores unrelated environment variables', () => {

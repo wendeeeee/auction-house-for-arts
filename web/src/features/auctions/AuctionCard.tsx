@@ -10,7 +10,7 @@ export function AuctionCard({ auction }: { auction: AuctionSummaryView }) {
   return (
     <article className="artwork-card">
       <Link to={`/auctions/${auction.slug}`} className="artwork-card__link">
-        <ArtworkImage slug={artwork.slug} title={artwork.title} />
+        <ArtworkImage slug={artwork.slug} title={artwork.title} image={artwork.coverImage} />
         <div className="artwork-card__caption">
           <p className="artwork-card__artist">{artwork.artist.name}</p>
           <h3 className="artwork-card__title">

@@ -50,6 +50,15 @@ export interface WebConfig {
   readonly baseUrl: string;
 }
 
+export interface StorageConfig {
+  /** Must be reachable from the browser too: presigned upload URLs point here. */
+  readonly endpoint: string;
+  readonly region: string;
+  readonly accessKeyId: string;
+  readonly secretAccessKey: string;
+  readonly bucket: string;
+}
+
 export interface AppConfig {
   readonly nodeEnvironment: NodeEnvironment;
   readonly api: { readonly port: number };
@@ -61,6 +70,7 @@ export interface AppConfig {
   readonly ledger: LedgerConfig;
   readonly payments: PaymentsConfig;
   readonly web: WebConfig;
+  readonly storage: StorageConfig;
 }
 
 /** Thrown at boot. Not a DomainError: there is no request to answer, only a process to stop. */
@@ -104,6 +114,14 @@ const environmentSchema = z.object({
   STRIPE_SECRET_KEY: z.string().startsWith('sk_test_', { error: 'must be a Stripe test-mode key (sk_test_…)' }).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().startsWith('whsec_', { error: 'must be a Stripe webhook signing secret (whsec_…)' }).optional(),
   WEB_BASE_URL: z.url({ error: 'must be an http(s) URL' }).default('http://localhost:5201'),
+  S3_ENDPOINT: z.url({ error: 'must be an http(s) URL' }).default('http://localhost:59000'),
+  S3_REGION: z.string().min(1).default('us-east-1'),
+  S3_ACCESS_KEY_ID: z.string().min(1).default('art_auction'),
+  S3_SECRET_ACCESS_KEY: z.string().min(1).default('art_auction_secret'),
+  S3_BUCKET: z
+    .string()
+    .regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, { error: 'must be a valid S3 bucket name' })
+    .default('artwork-images'),
 });
 
 /** Half a Stripe configuration would accept checkouts whose payments could never be confirmed. */
@@ -150,6 +168,13 @@ export function loadConfiguration(environment: NodeJS.ProcessEnv): AppConfig {
           : null,
     },
     web: { baseUrl: values.WEB_BASE_URL.replace(/\/+$/, '') },
+    storage: {
+      endpoint: values.S3_ENDPOINT.replace(/\/+$/, ''),
+      region: values.S3_REGION,
+      accessKeyId: values.S3_ACCESS_KEY_ID,
+      secretAccessKey: values.S3_SECRET_ACCESS_KEY,
+      bucket: values.S3_BUCKET,
+    },
   };
 }
 

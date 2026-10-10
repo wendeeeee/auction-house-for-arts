@@ -13,6 +13,7 @@
     "start:worker": "node --env-file-if-exists=../.env dist/worker.js",
     "migrate": "node --env-file-if-exists=../.env -r ts-node/register/transpile-only src/database/run-migrations.ts",
     "seed": "node --env-file-if-exists=../.env -r ts-node/register/transpile-only src/database/seed/run-seed.ts",
+    "seed:images": "node --env-file-if-exists=../.env -r ts-node/register/transpile-only src/database/seed/run-image-seed.ts",
     "seed:if-empty": "node --env-file-if-exists=../.env -r ts-node/register/transpile-only src/database/seed/run-seed.ts --if-empty",
     "db:reset": "node --env-file-if-exists=../.env -r ts-node/register/transpile-only src/database/reset-database.ts",
     "docs:openapi": "node --env-file-if-exists=../.env -r ts-node/register/transpile-only scripts/generate-openapi.ts",
@@ -21,6 +22,8 @@
     "test:e2e": "jest --selectProjects e2e --runInBand"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1149.0",
+    "@aws-sdk/s3-request-presigner": "^3.1149.0",
     "@fastify/static": "^10.1.6",
     "@nestjs/common": "^11.2.7",
     "@nestjs/core": "^11.2.7",
@@ -44,6 +47,7 @@
     "redis": "^5.12.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "sharp": "^0.35.5",
     "socket.io": "^4.8.4",
     "stripe": "^23.0.0",
     "zod": "^4.6.5"
