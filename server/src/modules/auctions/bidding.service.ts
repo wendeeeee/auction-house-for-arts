@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Clock } from '../../common/clock';
 import { InvariantViolationError } from '../../common/errors';
 import { AuthenticatedUser } from '../../common/identity';
@@ -6,9 +6,11 @@ import { withSpan } from '../../common/tracing';
 import { APP_CONFIG, AppConfig } from '../../config';
 import { UnitOfWork } from '../../database';
 import { ArtworkCatalogService } from '../artworks';
+import { AUCTION_EVENT_PUBLISHER, AuctionChangeAnnouncement, AuctionEventPublisher } from '../realtime';
 import { AuctionRepository } from './auction.repository';
 import { AuctionNotFoundError } from './auctions.errors';
 import { BidHistoryRepository } from './bid-history.repository';
+import { decideAuctionChangeAnnouncement } from './bidding/auction-change-events';
 import { assertAuctionIsOpen } from './bidding/auction-status';
 import { decideBidHistoryEntries, hasPriceOrLeaderChanged } from './bidding/bid-history-entries';
 import { assertBidderIsEligible } from './bidding/bidder-eligibility';
@@ -29,6 +31,11 @@ export interface PlaceMaximumBidOutcome {
   readonly minimumNextBidCents: number;
   readonly endsAt: Date;
   readonly isExtended: boolean;
+}
+
+interface CommittedBid {
+  readonly outcome: PlaceMaximumBidOutcome;
+  readonly announcement: AuctionChangeAnnouncement;
 }
 
 /**
@@ -53,9 +60,18 @@ export interface PlaceMaximumBidOutcome {
  * can land after `ends_at`, and a bid sent in time is rejected. The row lock makes waiters
  * queue and then run against fresh state. Nothing aborts. The cost is per-auction throughput
  * of one bid per transaction, a few milliseconds, which is plenty for people bidding.
+ *
+ * ## Announcing only after commit
+ * The real-time announcement goes out after `unitOfWork.run` resolves, that is after COMMIT.
+ * Published inside the unit, a bid that then failed to commit would already have shown every
+ * viewer a price that never existed. Publishing after commit can lose an announcement (the
+ * process dies in between), which costs one stale screen until the next refetch; announcing a
+ * phantom bid cannot be taken back.
  */
 @Injectable()
 export class BiddingService {
+  private readonly logger = new Logger(BiddingService.name);
+
   constructor(
     private readonly unitOfWork: UnitOfWork,
     private readonly auctionRepository: AuctionRepository,
@@ -64,13 +80,20 @@ export class BiddingService {
     private readonly artworkCatalog: ArtworkCatalogService,
     private readonly clock: Clock,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
+    @Inject(AUCTION_EVENT_PUBLISHER) private readonly eventPublisher: AuctionEventPublisher,
   ) {}
 
   async placeMaximumBid(bidder: AuthenticatedUser, auctionSlug: string, maxBidCents: number): Promise<PlaceMaximumBidOutcome> {
-    return withSpan('auctions.place_maximum_bid', { 'auction.slug': auctionSlug }, () =>
+    // A nested unit joins the caller's transaction, so "run() resolved" would no longer mean
+    // "committed", and the announcement below could precede a rollback.
+    if (this.unitOfWork.isInTransaction) {
+      throw new InvariantViolationError('placeMaximumBid must own its transaction, so it can announce after commit.');
+    }
+
+    const { outcome, announcement } = await withSpan('auctions.place_maximum_bid', { 'auction.slug': auctionSlug }, () =>
       // One short transaction with no network calls inside: it holds the auction lock, and
       // every other bidder on this auction waits for it.
-      this.unitOfWork.run(async () => {
+      this.unitOfWork.run(async (): Promise<CommittedBid> => {
         const auction = await this.auctionRepository.lockAuctionForBidding(auctionSlug);
         if (!auction) throw new AuctionNotFoundError(auctionSlug);
 
@@ -123,13 +146,37 @@ export class BiddingService {
         });
 
         return {
-          isLeading: after.leaderUserId === bidder.id,
-          priceCents: after.priceCents,
-          minimumNextBidCents: computeMinimumNextBidCents(state, after),
-          endsAt: softClose.endsAt,
-          isExtended: softClose.isExtended,
+          outcome: {
+            isLeading: after.leaderUserId === bidder.id,
+            priceCents: after.priceCents,
+            minimumNextBidCents: computeMinimumNextBidCents(state, after),
+            endsAt: softClose.endsAt,
+            isExtended: softClose.isExtended,
+          },
+          announcement: decideAuctionChangeAnnouncement(before, after, {
+            auctionSlug: auction.slug,
+            artworkTitle: artwork.artwork.title,
+            endsAt: softClose.endsAt,
+            isExtended: softClose.isExtended,
+          }),
         };
       }),
     );
+
+    this.announce(announcement);
+    return outcome;
+  }
+
+  /**
+   * Never throws: the bid is already committed, and failing the request now would tell the
+   * bidder their bid was lost when it was not. Viewers catch up on their next refetch.
+   */
+  private announce(announcement: AuctionChangeAnnouncement): void {
+    try {
+      this.eventPublisher.publish(announcement);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Could not announce a committed bid on ${announcement.auctionChanged.slug}: ${reason}`);
+    }
   }
 }

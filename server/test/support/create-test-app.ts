@@ -6,6 +6,8 @@ import { configureApp } from '../../src/app.setup';
 export interface TestAppOptions {
   /** Swap providers before the module compiles, e.g. `builder.overrideProvider(Clock).useValue(fakeClock)`. */
   readonly configure?: (builder: TestingModuleBuilder) => TestingModuleBuilder;
+  /** Runs after `configureApp` and before `init`, e.g. to install a WebSocket adapter. */
+  readonly beforeInit?: (app: NestFastifyApplication) => Promise<void>;
 }
 
 /**
@@ -19,6 +21,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<NestF
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), { logger: false });
   configureApp(app, { swaggerUiEnabled: false });
+  if (options.beforeInit) await options.beforeInit(app);
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
   return app;

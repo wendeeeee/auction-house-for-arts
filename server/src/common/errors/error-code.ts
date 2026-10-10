@@ -24,6 +24,8 @@ export enum ErrorCode {
   NOT_ALLOWED_TO_BID = 'NOT_ALLOWED_TO_BID',
   MAX_NOT_RAISED = 'MAX_NOT_RAISED',
   ARTWORK_ALREADY_AT_AUCTION = 'ARTWORK_ALREADY_AT_AUCTION',
+  /** Socket.IO only: a connection asked to watch more auctions than the per-connection cap. */
+  TOO_MANY_WATCHED_AUCTIONS = 'TOO_MANY_WATCHED_AUCTIONS',
 
   // 500: our bug, never the client's fault
   INVARIANT_VIOLATION = 'INVARIANT_VIOLATION',

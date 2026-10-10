@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { OutbidToasts } from '../features/auctions/OutbidToasts';
 import { DemoUserSwitcher } from '../features/demo-user/DemoUserSwitcher';
 import { CloseIcon, MenuIcon } from '../shared/ui/icons';
 
@@ -90,6 +91,8 @@ export function AppLayout() {
       <main id="main-content" className="site-main">
         <Outlet />
       </main>
+
+      <OutbidToasts />
 
       <footer className="site-footer">
         <div className="container">

@@ -21,6 +21,8 @@ jobs:
       DATABASE_URL: postgres://art_auction:art_auction@localhost:5432/art_auction
       # Integration and e2e tests create and migrate this database themselves.
       TEST_DATABASE_URL: postgres://art_auction:art_auction@localhost:5432/art_auction_test
+      # The Socket.IO Redis adapter; one integration test runs two API instances against it.
+      REDIS_URL: redis://localhost:6379
       # Tests never reach the network: no Jaeger in CI.
       OTEL_SDK_DISABLED: 'true'
 
@@ -38,6 +40,17 @@ jobs:
           --health-cmd "pg_isready -U art_auction -d art_auction"
           --health-interval 5s
           --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        # Same image as docker-compose.yml.
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
           --health-retries 10
 
     steps:
