@@ -88,7 +88,7 @@ function AuctionDetail({
   return (
     <article className="artwork-detail">
       <div className="artwork-detail__image">
-        <ArtworkImage slug={artwork.slug} title={artwork.title} size="large" />
+        <ArtworkImage slug={artwork.slug} title={artwork.title} image={artwork.coverImage} size="large" />
       </div>
 
       <div className="artwork-detail__text">

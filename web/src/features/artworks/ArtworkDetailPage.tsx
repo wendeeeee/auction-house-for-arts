@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { isApiErrorWithCode } from '../../shared/api/api-error';
+import type { ArtworkImageView } from '../../shared/api/api-types';
 import { formatBasisPointsAsPercent } from '../../shared/format/basis-points';
 import { formatCents } from '../../shared/format/money';
 import { useApiQuery } from '../../shared/api/use-api-query';
@@ -7,8 +9,10 @@ import { ErrorState, LoadingState } from '../../shared/ui/StatusMessage';
 import { listAuctions } from '../auctions/auctions-api';
 import { PutUpForAuctionForm } from '../auctions/PutUpForAuctionForm';
 import { useDemoUserId } from '../demo-user/use-demo-user-id';
-import { ArtworkImage } from './ArtworkImage';
+import { ArtworkGallery } from './ArtworkGallery';
+import { ImageManager } from './ImageManager';
 import { getArtwork } from './artworks-api';
+import { toGalleryImages } from './images/gallery-images';
 
 export function ArtworkDetailPage() {
   const { slug = '' } = useParams();
@@ -17,6 +21,8 @@ export function ArtworkDetailPage() {
     listAuctions({ artwork: slug, status: 'open' }, signal),
   );
   const demoUserId = useDemoUserId();
+  // The owner's latest list, so the gallery shows new photos without reloading the artwork.
+  const [ownerGallery, setOwnerGallery] = useState<{ slug: string; images: readonly ArtworkImageView[] } | null>(null);
 
   if (artwork.status === 'loading') return <LoadingState label="Loading the artwork" />;
 
@@ -43,7 +49,11 @@ export function ArtworkDetailPage() {
   return (
     <article className="artwork-detail">
       <div className="artwork-detail__image">
-        <ArtworkImage slug={work.slug} title={work.title} size="large" />
+        <ArtworkGallery
+          slug={work.slug}
+          title={work.title}
+          images={ownerGallery?.slug === work.slug ? ownerGallery.images : work.images}
+        />
       </div>
 
       <div className="artwork-detail__text">
@@ -85,6 +95,12 @@ export function ArtworkDetailPage() {
           </Link>
         )}
         {openAuctions.status === 'success' && !openAuction && isOwner && <PutUpForAuctionForm artworkSlug={work.slug} />}
+        {isOwner && (
+          <ImageManager
+            artworkSlug={work.slug}
+            onImagesChanged={(images) => setOwnerGallery({ slug: work.slug, images: toGalleryImages(images) })}
+          />
+        )}
 
         <section className="artist-note">
           <h2 className="artist-note__heading">About the artist</h2>

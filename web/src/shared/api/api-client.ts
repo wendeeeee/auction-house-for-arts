@@ -21,6 +21,9 @@ export interface ApiClient {
   get<T>(path: string, options?: RequestOptions): Promise<T>;
   /** Sends `body` as JSON. */
   post<T>(path: string, body: unknown, options?: RequestOptions): Promise<T>;
+  put<T>(path: string, body: unknown, options?: RequestOptions): Promise<T>;
+  /** Resolves with undefined on 204 No Content. */
+  delete<T = void>(path: string, options?: RequestOptions): Promise<T>;
 }
 
 export function createApiClient(options: ApiClientOptions = {}): ApiClient {
@@ -54,6 +57,7 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
       throw new ApiError(0, CLIENT_ERROR_CODES.NETWORK_ERROR, 'Could not reach the server.', {}, null);
     }
 
+    if (response.status === 204) return undefined as T;
     if (response.ok) return (await response.json()) as T;
     throw await toApiError(response);
   }
@@ -61,6 +65,8 @@ export function createApiClient(options: ApiClientOptions = {}): ApiClient {
   return {
     get: (path, requestOptions) => request('GET', path, requestOptions),
     post: (path, body, requestOptions) => request('POST', path, requestOptions, body),
+    put: (path, body, requestOptions) => request('PUT', path, requestOptions, body),
+    delete: (path, requestOptions) => request('DELETE', path, requestOptions),
   };
 }
 

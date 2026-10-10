@@ -42,6 +42,7 @@ describe('catalog API', () => {
         dimensions: '120 × 90 cm',
         artist: { slug: 'amara-okafor', name: 'Amara Okafor' },
         saleType: 'primary',
+        coverImage: null,
       });
     });
 
@@ -115,6 +116,8 @@ describe('catalog API', () => {
           bio: expect.any(String),
           royaltyBps: 500,
         },
+        coverImage: null,
+        images: [],
       });
     });
 

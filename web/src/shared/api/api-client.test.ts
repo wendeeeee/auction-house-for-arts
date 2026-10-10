@@ -99,6 +99,22 @@ describe('api client', () => {
     expect(sentHeaders(fetchImplementation)).not.toHaveProperty('Content-Type');
   });
 
+  it('sends a PUT with a JSON body', async () => {
+    const { client, fetchImplementation } = clientReturning(jsonResponse(200, { items: [] }));
+
+    await client.put('/artworks/tide-vessel/images/order', { imageIds: ['a'] });
+
+    expect(fetchImplementation.mock.calls[0]?.[1]?.method).toBe('PUT');
+    expect(fetchImplementation.mock.calls[0]?.[1]?.body).toBe('{"imageIds":["a"]}');
+  });
+
+  it('resolves a DELETE answered with 204 No Content to undefined', async () => {
+    const { client, fetchImplementation } = clientReturning(new Response(null, { status: 204 }));
+
+    await expect(client.delete('/artworks/tide-vessel/images/a')).resolves.toBeUndefined();
+    expect(fetchImplementation.mock.calls[0]?.[1]?.method).toBe('DELETE');
+  });
+
   it('returns the parsed body on success', async () => {
     const { client } = clientReturning(jsonResponse(200, { items: [{ slug: 'tide-vessel' }] }));
 
