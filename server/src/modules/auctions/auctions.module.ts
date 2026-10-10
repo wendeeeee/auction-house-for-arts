@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ArtworksModule } from '../artworks';
 import { RealtimeModule } from '../realtime';
 import { UsersModule } from '../users';
+import { AuctionClosingService } from './auction-closing.service';
 import { AuctionRepository } from './auction.repository';
 import { AuctionService } from './auction.service';
 import { AuctionsController } from './auctions.controller';
@@ -13,7 +14,14 @@ import { MaximumBidRepository } from './maximum-bid.repository';
 @Module({
   imports: [ArtworksModule, UsersModule, RealtimeModule],
   controllers: [AuctionsController, BidsController],
-  providers: [AuctionRepository, MaximumBidRepository, BidHistoryRepository, AuctionService, BiddingService],
-  exports: [AuctionService, BiddingService],
+  providers: [
+    AuctionRepository,
+    MaximumBidRepository,
+    BidHistoryRepository,
+    AuctionService,
+    BiddingService,
+    AuctionClosingService,
+  ],
+  exports: [AuctionService, BiddingService, AuctionClosingService],
 })
 export class AuctionsModule {}

@@ -8,7 +8,9 @@ import { DatabaseModule } from './database';
 import { ArtistsModule } from './modules/artists';
 import { ArtworksModule } from './modules/artworks';
 import { AuctionsModule } from './modules/auctions';
+import { ClosingModule } from './modules/closing';
 import { HealthModule } from './modules/health';
+import { NotificationsModule } from './modules/notifications';
 import { UsersModule } from './modules/users';
 
 @Module({
@@ -22,6 +24,8 @@ import { UsersModule } from './modules/users';
     ArtistsModule,
     ArtworksModule,
     AuctionsModule,
+    ClosingModule,
+    NotificationsModule,
   ],
   providers: [
     // Global: every route resolves X-Demo-User-Id; @RequireUser() routes also reject anonymous.

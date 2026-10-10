@@ -1,7 +1,11 @@
 import {
   AUCTION_CHANGED_EVENT,
+  AUCTION_CLOSED_EVENT,
   type AuctionChangedEvent,
+  type AuctionClosedEvent,
   type HandshakeAuth,
+  NOTIFICATION_CREATED_EVENT,
+  type NotificationCreatedEvent,
   UNWATCH_AUCTION_MESSAGE,
   USER_OUTBID_EVENT,
   type UserOutbidEvent,
@@ -26,15 +30,16 @@ export interface RealtimeConnectionOptions {
 }
 
 /**
- * Why a watcher is asked to refetch: the auction changed, or the socket (re)connected and
- * events may have been missed while it was out of the room.
+ * Why a watcher is asked to refetch: the auction changed, its outcome was recorded, or the
+ * socket (re)connected and events may have been missed while it was out of the room.
  */
-export type AuctionRefetchReason = 'changed' | 'connected';
+export type AuctionRefetchReason = 'changed' | 'closed' | 'connected';
 
 export interface RealtimeConnection {
   /** Joins `auction:{slug}` and calls `onRefetchNeeded` when the page should refetch. Returns the unwatch function. */
   watchAuction(slug: string, onRefetchNeeded: (reason: AuctionRefetchReason) => void): () => void;
   onOutbid(listener: (event: UserOutbidEvent) => void): () => void;
+  onNotification(listener: (event: NotificationCreatedEvent) => void): () => void;
 }
 
 const authFor = (demoUserId: string | null): HandshakeAuth => (demoUserId ? { demoUserId } : {});
@@ -54,6 +59,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
   let socket: RealtimeSocket | null = null;
   const watchersBySlug = new Map<string, Set<(reason: AuctionRefetchReason) => void>>();
   const outbidListeners = new Set<(event: UserOutbidEvent) => void>();
+  const notificationListeners = new Set<(event: NotificationCreatedEvent) => void>();
 
   function ensureSocket(): RealtimeSocket {
     if (socket) return socket;
@@ -67,8 +73,14 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
     created.on(AUCTION_CHANGED_EVENT, (event: AuctionChangedEvent) => {
       for (const watcher of [...(watchersBySlug.get(event.slug) ?? [])]) watcher('changed');
     });
+    created.on(AUCTION_CLOSED_EVENT, (event: AuctionClosedEvent) => {
+      for (const watcher of [...(watchersBySlug.get(event.slug) ?? [])]) watcher('closed');
+    });
     created.on(USER_OUTBID_EVENT, (event: UserOutbidEvent) => {
       for (const listener of [...outbidListeners]) listener(event);
+    });
+    created.on(NOTIFICATION_CREATED_EVENT, (event: NotificationCreatedEvent) => {
+      for (const listener of [...notificationListeners]) listener(event);
     });
     options.subscribeToDemoUser(() => {
       created.auth = authFor(options.getDemoUserId());
@@ -105,6 +117,14 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
       outbidListeners.add(listener);
       return () => {
         outbidListeners.delete(listener);
+      };
+    },
+
+    onNotification(listener) {
+      ensureSocket();
+      notificationListeners.add(listener);
+      return () => {
+        notificationListeners.delete(listener);
       };
     },
   };

@@ -18,6 +18,11 @@ export interface RedisConfig {
   readonly url: string;
 }
 
+export interface MessagingConfig {
+  /** Only the worker connects. */
+  readonly rabbitMqUrl: string;
+}
+
 export interface AuctionsConfig {
   /** A price or leader change this close to `ends_at` pushes the end out to `acceptedAt + window`. */
   readonly softCloseWindowSeconds: number;
@@ -29,6 +34,7 @@ export interface AppConfig {
   readonly database: DatabaseConfig;
   readonly tracing: TracingConfig;
   readonly redis: RedisConfig;
+  readonly messaging: MessagingConfig;
   readonly auctions: AuctionsConfig;
 }
 
@@ -42,6 +48,7 @@ export class InvalidConfigurationError extends Error {
 
 const POSTGRES_URL_PATTERN = /^postgres(ql)?:\/\/.+/;
 const REDIS_URL_PATTERN = /^rediss?:\/\/.+/;
+const AMQP_URL_PATTERN = /^amqps?:\/\/.+/;
 
 const environmentSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -54,6 +61,10 @@ const environmentSchema = z.object({
     .string()
     .regex(REDIS_URL_PATTERN, { error: 'must be a redis:// or rediss:// connection URL' })
     .default('redis://localhost:56380'),
+  RABBITMQ_URL: z
+    .string()
+    .regex(AMQP_URL_PATTERN, { error: 'must be an amqp:// or amqps:// connection URL' })
+    .default('amqp://art_auction:art_auction@localhost:56727'),
   OTEL_SERVICE_NAME: z.string().min(1).optional(),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.url({ error: 'must be an http(s) URL' }).default('http://localhost:4328'),
   OTEL_SDK_DISABLED: z
@@ -87,6 +98,7 @@ export function loadConfiguration(environment: NodeJS.ProcessEnv): AppConfig {
       isDisabled: values.OTEL_SDK_DISABLED,
     },
     redis: { url: values.REDIS_URL },
+    messaging: { rabbitMqUrl: values.RABBITMQ_URL },
     auctions: { softCloseWindowSeconds: values.SOFT_CLOSE_WINDOW_SECONDS },
   };
 }

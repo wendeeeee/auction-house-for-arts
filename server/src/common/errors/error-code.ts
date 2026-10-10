@@ -15,6 +15,7 @@ export enum ErrorCode {
   REQUEST_REJECTED = 'REQUEST_REJECTED',
   ARTWORK_NOT_FOUND = 'ARTWORK_NOT_FOUND',
   AUCTION_NOT_FOUND = 'AUCTION_NOT_FOUND',
+  NOTIFICATION_NOT_FOUND = 'NOTIFICATION_NOT_FOUND',
   /** 403: only the artwork's current owner may put it up for auction. */
   NOT_ARTWORK_OWNER = 'NOT_ARTWORK_OWNER',
 

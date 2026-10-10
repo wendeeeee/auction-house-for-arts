@@ -10,6 +10,16 @@ export const AUCTION_CHANGED_EVENT = 'auction:changed';
 /** Sent to `user:{id}` when that user stops being the leader of an auction. */
 export const USER_OUTBID_EVENT = 'user:outbid';
 
+/** Sent to `user:{id}` by the worker, carrying the stored notification. */
+export const NOTIFICATION_CREATED_EVENT = 'notification:created';
+
+/** Sent to `auction:{slug}` once its outcome is recorded: a signal to refetch. */
+export const AUCTION_CLOSED_EVENT = 'auction:closed';
+
+export interface AuctionClosedEvent {
+  readonly slug: string;
+}
+
 /** Client → server: start and stop receiving `auction:changed` for one auction. */
 export const WATCH_AUCTION_MESSAGE = 'auction:watch';
 export const UNWATCH_AUCTION_MESSAGE = 'auction:unwatch';

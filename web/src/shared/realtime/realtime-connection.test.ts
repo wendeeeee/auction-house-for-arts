@@ -187,6 +187,44 @@ describe('createRealtimeConnection', () => {
     expect(socket().takeEmitted()).toEqual([]);
   });
 
+  it('asks watchers of a closed auction, and only them, to refetch its outcome', () => {
+    const { connection, socket } = setUp();
+    const onBlueHour = vi.fn();
+    const onDesert = vi.fn();
+    connection.watchAuction('blue-hour', onBlueHour);
+    connection.watchAuction('desert-geometry', onDesert);
+    socket().simulateConnected();
+    onBlueHour.mockClear();
+    onDesert.mockClear();
+
+    socket().deliver('auction:closed', { slug: 'blue-hour' });
+
+    expect(onBlueHour).toHaveBeenCalledExactlyOnceWith('closed');
+    expect(onDesert).not.toHaveBeenCalled();
+  });
+
+  it('delivers new notifications to every listener until it unsubscribes', () => {
+    const { connection, socket } = setUp('user-1');
+    const listener = vi.fn();
+    const unsubscribe = connection.onNotification(listener);
+    const notification = {
+      id: 'notification-1',
+      kind: 'bidder_auction_won',
+      auctionSlug: 'blue-hour',
+      artworkTitle: 'Blue Hour',
+      outcome: 'sold',
+      hammerPriceCents: 510_00,
+      createdAt: '2026-01-15T13:00:00.000Z',
+      readAt: null,
+    };
+
+    socket().deliver('notification:created', notification);
+    unsubscribe();
+    socket().deliver('notification:created', notification);
+
+    expect(listener).toHaveBeenCalledExactlyOnceWith(notification);
+  });
+
   it('delivers outbid alerts to every listener until it unsubscribes', () => {
     const { connection, socket } = setUp('user-1');
     const listener = vi.fn();

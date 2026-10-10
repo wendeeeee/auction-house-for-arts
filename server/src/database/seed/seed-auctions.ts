@@ -11,6 +11,7 @@ export interface SeedAuction {
 }
 
 const auctionId = (number: number): string => `5eed0000-0000-4000-8000-0000000c00${String(number).padStart(2, '0')}`;
+const MINUTE_SECONDS = 60;
 const HOUR_SECONDS = 3_600;
 
 /** No bids are seeded: every bid on the page comes from someone using the demo. */
@@ -38,6 +39,15 @@ export const SEED_AUCTIONS: readonly SeedAuction[] = [
     startingPriceCents: 400_00,
     reservePriceCents: 1_200_00,
     endsInSeconds: 3 * 24 * HOUR_SECONDS,
+  },
+  {
+    // Short, so a demo can watch it close.
+    id: auctionId(4),
+    slug: 'lagos-at-dusk-lot-4',
+    artworkSlug: 'lagos-at-dusk',
+    startingPriceCents: 300_00,
+    reservePriceCents: null,
+    endsInSeconds: 10 * MINUTE_SECONDS,
   },
 ];
 

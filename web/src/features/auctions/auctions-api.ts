@@ -3,6 +3,7 @@ import type {
   ArtworkMedium,
   AuctionDetailView,
   AuctionListSort,
+  AuctionOutcomeView,
   AuctionStatusFilter,
   AuctionSummaryView,
   ListView,
@@ -31,6 +32,10 @@ export function listAuctions(filters: AuctionListFilters, signal: AbortSignal): 
 /** The detail depends on who is asking (your maximum, whether you may bid). */
 export function getAuction(slug: string, signal: AbortSignal): Promise<AuctionDetailView> {
   return apiClient.get(`/auctions/${encodeURIComponent(slug)}`, { signal });
+}
+
+export function getAuctionOutcome(slug: string, signal: AbortSignal): Promise<AuctionOutcomeView> {
+  return apiClient.get(`/auctions/${encodeURIComponent(slug)}/outcome`, { signal });
 }
 
 export function placeMaximumBid(slug: string, maxBidCents: number): Promise<PlaceMaximumBidResultView> {

@@ -85,3 +85,34 @@ export interface PlaceMaximumBidResultView {
   readonly endsAt: string;
   readonly extended: boolean;
 }
+
+export type AuctionOutcome = 'sold' | 'reserve_not_met' | 'no_bids';
+
+export type AuctionOutcomeView =
+  | { readonly isClosed: false }
+  | {
+      readonly isClosed: true;
+      readonly outcome: AuctionOutcome;
+      readonly hammerPriceCents: number | null;
+      readonly winnerHandle: string | null;
+      readonly closedAt: string;
+      readonly youWon: boolean;
+    };
+
+export type NotificationKind = 'seller_auction_closed' | 'bidder_auction_won' | 'bidder_reserve_not_met';
+
+export interface NotificationView {
+  readonly id: string;
+  readonly kind: NotificationKind;
+  readonly auctionSlug: string;
+  readonly artworkTitle: string;
+  readonly outcome: AuctionOutcome;
+  readonly hammerPriceCents: number | null;
+  readonly createdAt: string;
+  readonly readAt: string | null;
+}
+
+export interface NotificationListView {
+  readonly items: readonly NotificationView[];
+  readonly unreadCount: number;
+}

@@ -42,17 +42,19 @@ interface CommittedBid {
  * Placing a maximum bid: lock, decide with the pure rules, write, commit.
  *
  * ## Lock order (defined here; every module that touches an auction follows it)
- * 1. The `auctions` row, with `SELECT … FOR UPDATE` (AuctionRepository.lockAuctionForBidding).
- * 2. Then, and only while holding it, that auction's `max_bids` and `bid_history` rows.
+ * 1. The `auctions` row, with `SELECT … FOR UPDATE` (lockAuctionForBidding, or
+ *    lockUnclosedForClosing for the close worker).
+ * 2. Then, and only while holding it, that auction's `max_bids` and `bid_history` rows (and
+ *    for a close, its new `auction_closes` and `outbox_events` rows).
  * No other rows are locked. Reads of other modules' tables (the artwork's owner) are plain
  * reads, not locks.
  *
  * Taking one lock first, always the same one, means two transactions on the same auction
- * queue on it instead of deadlocking or interleaving. The close worker (phase 4) must take the
- * same auction row lock and re-check `ends_at` after getting it. Then a soft-close extension
- * and a close cannot both win: whichever locks second sees the other's committed write. A bid
- * that extended the auction makes the worker's stale "this has ended" selection false, and a
- * close that committed first makes the bid fail as AUCTION_ENDED.
+ * queue on it instead of deadlocking or interleaving. The close worker takes the same lock and
+ * re-checks `ends_at` after getting it. Then a soft-close extension and a close cannot both
+ * win: whichever locks second sees the other's committed write. A bid that extended the auction
+ * makes the worker's stale "this has ended" selection false, and a close that committed first
+ * makes the bid fail as AUCTION_ENDED.
  *
  * ## Why a row lock, not SERIALIZABLE or a version check
  * A bidding war is many writers on one row. SERIALIZABLE and optimistic version checks both
