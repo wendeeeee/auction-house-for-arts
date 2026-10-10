@@ -1445,6 +1445,83 @@ a {
   margin-top: 1rem;
 }
 
+/* ---- Outbid alerts ---- */
+
+/* Pinned bottom-right; full width (minus the gutter) on small screens. Above the sticky header. */
+.toast-region {
+  position: fixed;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  left: var(--gutter);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+@media (min-width: 40rem) {
+  .toast-region {
+    left: auto;
+    width: 22rem;
+  }
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius);
+  background: var(--navy-ink);
+  box-shadow: var(--shadow-large);
+  color: rgb(255 255 255 / 80%);
+  pointer-events: auto;
+}
+
+.toast__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.toast__message {
+  margin: 0.25rem 0 0;
+  font-size: 0.9375rem;
+}
+
+.toast__link {
+  color: #fff;
+  font-weight: 700;
+}
+
+.toast__amount {
+  color: var(--gold);
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.toast__close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: var(--radius-small);
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.toast__close:hover {
+  background: rgb(255 255 255 / 10%);
+}
+
+/* The default navy focus ring would vanish on the navy panel. */
+.toast :focus-visible {
+  outline-color: var(--gold);
+}
+
 /* ---- Status ---- */
 
 .status-message {

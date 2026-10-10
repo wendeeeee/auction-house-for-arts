@@ -3,11 +3,10 @@ import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
 import { UnauthenticatedError } from '../errors';
 import { IDENTITY_LOOKUP, IdentityLookup } from './authenticated-user';
+import { parseDemoUserIdClaim } from './demo-user-id';
 import { REQUIRE_USER_METADATA_KEY } from './identity.decorators';
 
 export const DEMO_USER_HEADER = 'x-demo-user-id';
-
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Demo identity: there is no real authentication (a documented scope decision). The web app's
@@ -16,7 +15,8 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
  * - No header: anonymous (`request.user = null`), allowed unless the route has `@RequireUser()`.
  * - A malformed or unknown ID: 401, never silently anonymous. A client that sends an identity
  *   expects to act as that user, so quietly dropping it would be wrong.
- * - The UUID check runs before the lookup, so garbage never reaches the database.
+ * - The UUID check (`parseDemoUserIdClaim`, shared with the Socket.IO handshake) runs before
+ *   the lookup, so garbage never reaches the database.
  *
  * Replacing this guard (and only this guard) is how real authentication would be added.
  */
@@ -42,11 +42,10 @@ export class DemoIdentityGuard implements CanActivate {
   }
 
   private async resolveUser(header: string | string[] | undefined) {
-    if (header === undefined || header === '') return null;
-    if (typeof header !== 'string' || !UUID_PATTERN.test(header)) {
-      throw new UnauthenticatedError('X-Demo-User-Id is not a known demo user.');
-    }
-    const user = await this.identityLookup.findById(header.toLowerCase());
+    const claim = parseDemoUserIdClaim(header);
+    if (claim.kind === 'anonymous') return null;
+    if (claim.kind === 'malformed') throw new UnauthenticatedError('X-Demo-User-Id is not a known demo user.');
+    const user = await this.identityLookup.findById(claim.userId);
     if (!user) throw new UnauthenticatedError('X-Demo-User-Id is not a known demo user.');
     return { id: user.id, displayName: user.displayName, handle: user.handle };
   }

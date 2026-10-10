@@ -12,6 +12,7 @@ import { Countdown } from './Countdown';
 import { MaximumBidForm } from './MaximumBidForm';
 import { ReserveBadge } from './ReserveBadge';
 import { describeTimeRemaining } from './time-remaining';
+import { useLiveAuction } from './use-live-auction';
 import { useNow } from './use-now';
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -20,11 +21,13 @@ const dateTimeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium',
 export function AuctionDetailPage() {
   const { slug = '' } = useParams();
   const demoUserId = useDemoUserId();
-  // Bumped after a bid, to refetch. The viewer is part of the key: the detail shows your own maximum.
+  // Bumped to refetch: after your own bid, and when anyone's bid changes the auction. The
+  // viewer is part of the key: the detail shows your own maximum.
   const [refreshCount, setRefreshCount] = useState(0);
   const auction = useApiQuery(`auction:${slug}:${demoUserId ?? 'anonymous'}:${refreshCount}`, (signal) =>
     getAuction(slug, signal),
   );
+  useLiveAuction(slug, () => setRefreshCount((count) => count + 1));
 
   // While a refetch loads, keep showing the last result for this auction instead of a spinner.
   const lastLoaded = useRef<AuctionDetailView | null>(null);

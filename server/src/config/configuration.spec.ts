@@ -19,6 +19,7 @@ describe('loadConfiguration', () => {
       api: { port: 4101 },
       database: { url: DATABASE_URL, poolMax: 10 },
       tracing: { serviceName: undefined, exporterEndpoint: 'http://localhost:4328', isDisabled: false },
+      redis: { url: 'redis://localhost:56380' },
       auctions: { softCloseWindowSeconds: 120 },
     });
   });
@@ -29,6 +30,7 @@ describe('loadConfiguration', () => {
       API_PORT: '8080',
       DATABASE_URL: 'postgresql://user:secret@db:5432/art',
       DATABASE_POOL_MAX: '25',
+      REDIS_URL: 'rediss://cache:6380',
       OTEL_SERVICE_NAME: 'custom-name',
       OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector:4318',
       OTEL_SDK_DISABLED: 'true',
@@ -39,6 +41,7 @@ describe('loadConfiguration', () => {
       api: { port: 8080 },
       database: { url: 'postgresql://user:secret@db:5432/art', poolMax: 25 },
       tracing: { serviceName: 'custom-name', exporterEndpoint: 'http://collector:4318', isDisabled: true },
+      redis: { url: 'rediss://cache:6380' },
       auctions: { softCloseWindowSeconds: 30 },
     });
   });
@@ -58,6 +61,7 @@ describe('loadConfiguration', () => {
       API_PORT: 'eighty',
       DATABASE_URL: 'mysql://localhost/art',
       DATABASE_POOL_MAX: '0',
+      REDIS_URL: 'http://localhost:6379',
       OTEL_SDK_DISABLED: 'yes',
       SOFT_CLOSE_WINDOW_SECONDS: '0',
     });
@@ -66,6 +70,7 @@ describe('loadConfiguration', () => {
       'API_PORT',
       'DATABASE_URL',
       'DATABASE_POOL_MAX',
+      'REDIS_URL',
       'OTEL_SDK_DISABLED',
       'SOFT_CLOSE_WINDOW_SECONDS',
     ]);

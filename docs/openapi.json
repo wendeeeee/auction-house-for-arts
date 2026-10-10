@@ -482,6 +482,870 @@
           "artworks"
         ]
       }
+    },
+    "/api/auctions": {
+      "post": {
+        "operationId": "AuctionsController_createAuction",
+        "parameters": [
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "description": "Correlation ID echoed in the response; generated when absent or malformed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "artworkSlug": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                  },
+                  "startingPriceCents": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 10000000000
+                  },
+                  "reservePriceCents": {
+                    "description": "Hidden from everyone, including in every response.",
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 10000000000
+                  },
+                  "endsAt": {
+                    "description": "ISO 8601 instant, 2 minutes to 14 days from now.",
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": [
+                  "artworkSlug",
+                  "startingPriceCents",
+                  "endsAt"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "slug": {
+                      "type": "string"
+                    },
+                    "artwork": {
+                      "type": "object",
+                      "properties": {
+                        "slug": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "year": {
+                          "nullable": true,
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "medium": {
+                          "type": "string",
+                          "enum": [
+                            "Painting",
+                            "Print",
+                            "Photography",
+                            "Sculpture",
+                            "Drawing",
+                            "Digital"
+                          ]
+                        },
+                        "dimensions": {
+                          "type": "string"
+                        },
+                        "artist": {
+                          "type": "object",
+                          "properties": {
+                            "slug": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "slug",
+                            "name"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "saleType": {
+                          "type": "string",
+                          "enum": [
+                            "primary",
+                            "resale"
+                          ],
+                          "description": "primary: the artist owns it; resale: a collector does."
+                        }
+                      },
+                      "required": [
+                        "slug",
+                        "title",
+                        "year",
+                        "medium",
+                        "dimensions",
+                        "artist",
+                        "saleType"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "ended"
+                      ]
+                    },
+                    "startingPriceCents": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "The visible price, derived from everyone’s maximums."
+                    },
+                    "bidCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Visible bid history rows."
+                    },
+                    "reserveStatus": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "not_met",
+                        "met"
+                      ],
+                      "description": "Whether a hidden reserve exists and is met. Never its amount."
+                    },
+                    "endsAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "extensionCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Soft-close extensions so far."
+                    },
+                    "sellerHandle": {
+                      "type": "string"
+                    },
+                    "leaderHandle": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "minimumNextBidCents": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "The lowest maximum anyone but the leader may place. The leader may raise to anything above their maximum."
+                    },
+                    "originalEndsAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bidderHandle": {
+                            "type": "string"
+                          },
+                          "amountCents": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "placed",
+                              "automatic"
+                            ],
+                            "description": "placed: the bidder’s own bid. automatic: bid by the system from a maximum."
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          }
+                        },
+                        "required": [
+                          "bidderHandle",
+                          "amountCents",
+                          "kind",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Newest first."
+                    },
+                    "yourMaxBidCents": {
+                      "nullable": true,
+                      "description": "Your own maximum on this auction, if you have bid.",
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "youAreLeading": {
+                      "type": "boolean"
+                    },
+                    "youMayBid": {
+                      "type": "boolean",
+                      "description": "False when anonymous, when the auction has ended, or for the seller and the owner."
+                    }
+                  },
+                  "required": [
+                    "slug",
+                    "artwork",
+                    "status",
+                    "startingPriceCents",
+                    "priceCents",
+                    "bidCount",
+                    "reserveStatus",
+                    "endsAt",
+                    "extensionCount",
+                    "sellerHandle",
+                    "leaderHandle",
+                    "minimumNextBidCents",
+                    "originalEndsAt",
+                    "history",
+                    "yourMaxBidCents",
+                    "youAreLeading",
+                    "youMayBid"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED"
+          },
+          "403": {
+            "description": "NOT_ARTWORK_OWNER"
+          },
+          "404": {
+            "description": "ARTWORK_NOT_FOUND"
+          },
+          "409": {
+            "description": "ARTWORK_ALREADY_AT_AUCTION"
+          }
+        },
+        "summary": "Put an artwork you own up for auction",
+        "tags": [
+          "auctions"
+        ]
+      },
+      "get": {
+        "operationId": "AuctionsController_listAuctions",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "1–100, default 50.",
+            "schema": {}
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "description": "Default ending_soon.",
+            "schema": {
+              "enum": [
+                "ending_soon",
+                "price_low",
+                "price_high",
+                "most_bids"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "artwork",
+            "required": false,
+            "in": "query",
+            "description": "Artwork slug: that artwork’s auctions only.",
+            "schema": {}
+          },
+          {
+            "name": "medium",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Painting",
+                "Print",
+                "Photography",
+                "Sculpture",
+                "Drawing",
+                "Digital"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Default open.",
+            "schema": {
+              "enum": [
+                "open",
+                "ended",
+                "all"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "description": "Correlation ID echoed in the response; generated when absent or malformed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "slug": {
+                            "type": "string"
+                          },
+                          "artwork": {
+                            "type": "object",
+                            "properties": {
+                              "slug": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "year": {
+                                "nullable": true,
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "medium": {
+                                "type": "string",
+                                "enum": [
+                                  "Painting",
+                                  "Print",
+                                  "Photography",
+                                  "Sculpture",
+                                  "Drawing",
+                                  "Digital"
+                                ]
+                              },
+                              "dimensions": {
+                                "type": "string"
+                              },
+                              "artist": {
+                                "type": "object",
+                                "properties": {
+                                  "slug": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "slug",
+                                  "name"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "saleType": {
+                                "type": "string",
+                                "enum": [
+                                  "primary",
+                                  "resale"
+                                ],
+                                "description": "primary: the artist owns it; resale: a collector does."
+                              }
+                            },
+                            "required": [
+                              "slug",
+                              "title",
+                              "year",
+                              "medium",
+                              "dimensions",
+                              "artist",
+                              "saleType"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "open",
+                              "ended"
+                            ]
+                          },
+                          "startingPriceCents": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "priceCents": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "The visible price, derived from everyone’s maximums."
+                          },
+                          "bidCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Visible bid history rows."
+                          },
+                          "reserveStatus": {
+                            "type": "string",
+                            "enum": [
+                              "none",
+                              "not_met",
+                              "met"
+                            ],
+                            "description": "Whether a hidden reserve exists and is met. Never its amount."
+                          },
+                          "endsAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          },
+                          "extensionCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Soft-close extensions so far."
+                          }
+                        },
+                        "required": [
+                          "slug",
+                          "artwork",
+                          "status",
+                          "startingPriceCents",
+                          "priceCents",
+                          "bidCount",
+                          "reserveStatus",
+                          "endsAt",
+                          "extensionCount"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "summary": "Browse auctions",
+        "tags": [
+          "auctions"
+        ]
+      }
+    },
+    "/api/auctions/{slug}": {
+      "get": {
+        "operationId": "AuctionsController_getAuction",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "description": "Correlation ID echoed in the response; generated when absent or malformed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "slug": {
+                      "type": "string"
+                    },
+                    "artwork": {
+                      "type": "object",
+                      "properties": {
+                        "slug": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "year": {
+                          "nullable": true,
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "medium": {
+                          "type": "string",
+                          "enum": [
+                            "Painting",
+                            "Print",
+                            "Photography",
+                            "Sculpture",
+                            "Drawing",
+                            "Digital"
+                          ]
+                        },
+                        "dimensions": {
+                          "type": "string"
+                        },
+                        "artist": {
+                          "type": "object",
+                          "properties": {
+                            "slug": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "slug",
+                            "name"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "saleType": {
+                          "type": "string",
+                          "enum": [
+                            "primary",
+                            "resale"
+                          ],
+                          "description": "primary: the artist owns it; resale: a collector does."
+                        }
+                      },
+                      "required": [
+                        "slug",
+                        "title",
+                        "year",
+                        "medium",
+                        "dimensions",
+                        "artist",
+                        "saleType"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "open",
+                        "ended"
+                      ]
+                    },
+                    "startingPriceCents": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "The visible price, derived from everyone’s maximums."
+                    },
+                    "bidCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Visible bid history rows."
+                    },
+                    "reserveStatus": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "not_met",
+                        "met"
+                      ],
+                      "description": "Whether a hidden reserve exists and is met. Never its amount."
+                    },
+                    "endsAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "extensionCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Soft-close extensions so far."
+                    },
+                    "sellerHandle": {
+                      "type": "string"
+                    },
+                    "leaderHandle": {
+                      "nullable": true,
+                      "type": "string"
+                    },
+                    "minimumNextBidCents": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "The lowest maximum anyone but the leader may place. The leader may raise to anything above their maximum."
+                    },
+                    "originalEndsAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "history": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bidderHandle": {
+                            "type": "string"
+                          },
+                          "amountCents": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "placed",
+                              "automatic"
+                            ],
+                            "description": "placed: the bidder’s own bid. automatic: bid by the system from a maximum."
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                          }
+                        },
+                        "required": [
+                          "bidderHandle",
+                          "amountCents",
+                          "kind",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Newest first."
+                    },
+                    "yourMaxBidCents": {
+                      "nullable": true,
+                      "description": "Your own maximum on this auction, if you have bid.",
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "youAreLeading": {
+                      "type": "boolean"
+                    },
+                    "youMayBid": {
+                      "type": "boolean",
+                      "description": "False when anonymous, when the auction has ended, or for the seller and the owner."
+                    }
+                  },
+                  "required": [
+                    "slug",
+                    "artwork",
+                    "status",
+                    "startingPriceCents",
+                    "priceCents",
+                    "bidCount",
+                    "reserveStatus",
+                    "endsAt",
+                    "extensionCount",
+                    "sellerHandle",
+                    "leaderHandle",
+                    "minimumNextBidCents",
+                    "originalEndsAt",
+                    "history",
+                    "yourMaxBidCents",
+                    "youAreLeading",
+                    "youMayBid"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "AUCTION_NOT_FOUND"
+          }
+        },
+        "summary": "One auction: price, reserve status, history, and your own maximum",
+        "tags": [
+          "auctions"
+        ]
+      }
+    },
+    "/api/auctions/{slug}/bids": {
+      "post": {
+        "description": "Being outbid at once by an existing maximum is not an error: the bid is accepted with leading: false.",
+        "operationId": "BidsController_placeMaximumBid",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "description": "Correlation ID echoed in the response; generated when absent or malformed.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "maxBidCents": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 10000000000,
+                    "description": "The most you are willing to pay, in cents. The system bids for you only as much as needed to lead."
+                  }
+                },
+                "required": [
+                  "maxBidCents"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "leading": {
+                      "type": "boolean",
+                      "description": "False when an existing maximum outbid you at once; the bid still counts."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "minimumNextBidCents": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "endsAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "extended": {
+                      "type": "boolean",
+                      "description": "True when this bid triggered the soft close and pushed the end out."
+                    }
+                  },
+                  "required": [
+                    "leading",
+                    "priceCents",
+                    "minimumNextBidCents",
+                    "endsAt",
+                    "extended"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED"
+          },
+          "404": {
+            "description": "AUCTION_NOT_FOUND"
+          },
+          "409": {
+            "description": "BID_TOO_LOW, AUCTION_ENDED, NOT_ALLOWED_TO_BID, or MAX_NOT_RAISED"
+          }
+        },
+        "summary": "Place or raise your maximum bid",
+        "tags": [
+          "auctions"
+        ]
+      }
     }
   },
   "info": {

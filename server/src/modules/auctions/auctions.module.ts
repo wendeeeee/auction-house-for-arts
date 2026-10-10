@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ArtworksModule } from '../artworks';
+import { RealtimeModule } from '../realtime';
 import { UsersModule } from '../users';
 import { AuctionRepository } from './auction.repository';
 import { AuctionService } from './auction.service';
@@ -10,7 +11,7 @@ import { BidsController } from './bids.controller';
 import { MaximumBidRepository } from './maximum-bid.repository';
 
 @Module({
-  imports: [ArtworksModule, UsersModule],
+  imports: [ArtworksModule, UsersModule, RealtimeModule],
   controllers: [AuctionsController, BidsController],
   providers: [AuctionRepository, MaximumBidRepository, BidHistoryRepository, AuctionService, BiddingService],
   exports: [AuctionService, BiddingService],

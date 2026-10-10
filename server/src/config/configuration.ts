@@ -13,6 +13,11 @@ export interface TracingConfig {
   readonly isDisabled: boolean;
 }
 
+export interface RedisConfig {
+  /** Backs the Socket.IO adapter, so several API instances share rooms. */
+  readonly url: string;
+}
+
 export interface AuctionsConfig {
   /** A price or leader change this close to `ends_at` pushes the end out to `acceptedAt + window`. */
   readonly softCloseWindowSeconds: number;
@@ -23,6 +28,7 @@ export interface AppConfig {
   readonly api: { readonly port: number };
   readonly database: DatabaseConfig;
   readonly tracing: TracingConfig;
+  readonly redis: RedisConfig;
   readonly auctions: AuctionsConfig;
 }
 
@@ -35,6 +41,7 @@ export class InvalidConfigurationError extends Error {
 }
 
 const POSTGRES_URL_PATTERN = /^postgres(ql)?:\/\/.+/;
+const REDIS_URL_PATTERN = /^rediss?:\/\/.+/;
 
 const environmentSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -43,6 +50,10 @@ const environmentSchema = z.object({
     .string({ error: 'is required' })
     .regex(POSTGRES_URL_PATTERN, { error: 'must be a postgres:// connection URL' }),
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
+  REDIS_URL: z
+    .string()
+    .regex(REDIS_URL_PATTERN, { error: 'must be a redis:// or rediss:// connection URL' })
+    .default('redis://localhost:56380'),
   OTEL_SERVICE_NAME: z.string().min(1).optional(),
   OTEL_EXPORTER_OTLP_ENDPOINT: z.url({ error: 'must be an http(s) URL' }).default('http://localhost:4328'),
   OTEL_SDK_DISABLED: z
@@ -75,6 +86,7 @@ export function loadConfiguration(environment: NodeJS.ProcessEnv): AppConfig {
       exporterEndpoint: values.OTEL_EXPORTER_OTLP_ENDPOINT,
       isDisabled: values.OTEL_SDK_DISABLED,
     },
+    redis: { url: values.REDIS_URL },
     auctions: { softCloseWindowSeconds: values.SOFT_CLOSE_WINDOW_SECONDS },
   };
 }
