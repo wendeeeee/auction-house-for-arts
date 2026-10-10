@@ -14,6 +14,9 @@ import { RedisIoAdapter } from './modules/realtime';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
     logger: new CorrelatedConsoleLogger(),
+    // Keeps each request's exact bytes in `request.rawBody`: a webhook signature is computed over
+    // those bytes, and re-serialized JSON would not match it.
+    rawBody: true,
   });
   configureApp(app);
   // SIGTERM / SIGINT run the shutdown hooks: close the pool, flush spans.

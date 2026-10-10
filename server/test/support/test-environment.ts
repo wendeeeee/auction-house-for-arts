@@ -10,3 +10,6 @@ process.env.NODE_ENV = 'test';
 process.env.TEST_DATABASE_URL = testDatabaseUrl;
 process.env.DATABASE_URL = testDatabaseUrl;
 process.env.OTEL_SDK_DISABLED = 'true';
+// Never Stripe: tests use FakePaymentsProvider, or the 503 stand-in when no provider is overridden.
+delete process.env.STRIPE_SECRET_KEY;
+delete process.env.STRIPE_WEBHOOK_SECRET;

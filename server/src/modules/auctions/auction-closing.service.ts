@@ -30,4 +30,8 @@ export class AuctionClosingService {
   findAuctionBySlug(slug: string): Promise<Auction | null> {
     return this.auctionRepository.findBySlug(slug);
   }
+
+  findAuctionById(auctionId: string): Promise<Auction | null> {
+    return this.auctionRepository.findById(auctionId);
+  }
 }

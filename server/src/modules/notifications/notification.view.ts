@@ -9,6 +9,7 @@ export const notificationViewSchema = z.object({
   artworkTitle: z.string(),
   outcome: z.enum(AUCTION_OUTCOMES),
   hammerPriceCents: z.number().int().nullable().describe('The sale price; set only when the auction sold.'),
+  earnedCents: z.number().int().nullable().describe('Set on payment notifications: your proceeds or royalty.'),
   createdAt: z.iso.datetime(),
   readAt: z.iso.datetime().nullable(),
 });
@@ -28,6 +29,7 @@ export function toNotificationView(notification: Notification): NotificationView
     artworkTitle: notification.payload.artworkTitle,
     outcome: notification.payload.outcome,
     hammerPriceCents: notification.payload.hammerPriceCents,
+    earnedCents: notification.payload.earnedCents ?? null,
     createdAt: notification.createdAt.toISOString(),
     readAt: notification.readAt === null ? null : notification.readAt.toISOString(),
   };

@@ -1698,6 +1698,80 @@ a {
   font-size: 0.875rem;
 }
 
+/* ---- Payments and earnings ---- */
+
+.payment-status {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(255 255 255 / 15%);
+}
+
+.payment-status__headline {
+  margin: 0.25rem 0 0;
+  color: #fff;
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.payment-status__actions {
+  margin-top: 0.75rem;
+}
+
+.checkout-error {
+  flex-basis: 100%;
+  margin: 0.5rem 0 0;
+  color: var(--red);
+  font-size: 0.875rem;
+}
+
+.auction-outcome--sold .checkout-error {
+  color: #fff;
+  font-weight: 600;
+}
+
+.earnings-summary {
+  margin-bottom: 1.25rem;
+}
+
+.earnings-list {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.earnings-list__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.375rem 1rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.earnings-list__row:first-child {
+  border-top: 0;
+}
+
+.earnings-list__memo {
+  color: var(--navy-ink);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.earnings-list__amount {
+  color: var(--navy-ink);
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.earnings-list__meta {
+  grid-column: 1 / -1;
+  color: var(--steel);
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+}
+
 /* ---- Status ---- */
 
 .status-message {

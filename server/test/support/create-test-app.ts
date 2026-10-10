@@ -19,7 +19,11 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<NestF
   const builder = Test.createTestingModule({ imports: [AppModule] });
   const moduleRef = await (options.configure ? options.configure(builder) : builder).compile();
 
-  const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), { logger: false });
+  const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter(), {
+    logger: false,
+    // As in main.ts: webhook signatures are verified against the raw body.
+    rawBody: true,
+  });
   configureApp(app, { swaggerUiEnabled: false });
   if (options.beforeInit) await options.beforeInit(app);
   await app.init();

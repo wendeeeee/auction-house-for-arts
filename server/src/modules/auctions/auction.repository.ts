@@ -95,6 +95,13 @@ export class AuctionRepository {
     return rows[0] ? toAuction(rows[0]) : null;
   }
 
+  async findById(id: string): Promise<Auction | null> {
+    const { rows } = await this.unitOfWork
+      .client()
+      .query<AuctionRow>(`SELECT ${AUCTION_COLUMNS} FROM auctions WHERE id = $1`, [id]);
+    return rows[0] ? toAuction(rows[0]) : null;
+  }
+
   /**
    * Locks the auction row until the transaction ends. Every bid on the auction, and the close
    * worker (phase 4), takes this lock first, so they run one at a time and each sees the

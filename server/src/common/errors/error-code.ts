@@ -6,6 +6,8 @@ export enum ErrorCode {
   // 400: the request itself is wrong
   VALIDATION_FAILED = 'VALIDATION_FAILED',
   INVALID_AMOUNT = 'INVALID_AMOUNT',
+  /** A payment-provider webhook whose signature does not verify against the raw body. */
+  INVALID_WEBHOOK_SIGNATURE = 'INVALID_WEBHOOK_SIGNATURE',
 
   // 401 / 403 / 404
   UNAUTHENTICATED = 'UNAUTHENTICATED',
@@ -18,6 +20,10 @@ export enum ErrorCode {
   NOTIFICATION_NOT_FOUND = 'NOTIFICATION_NOT_FOUND',
   /** 403: only the artwork's current owner may put it up for auction. */
   NOT_ARTWORK_OWNER = 'NOT_ARTWORK_OWNER',
+  /** 403: only the winner can pay for an auction. */
+  NOT_AUCTION_WINNER = 'NOT_AUCTION_WINNER',
+  /** 403: only the buyer and the seller can see a purchase. */
+  NOT_PURCHASE_PARTY = 'NOT_PURCHASE_PARTY',
 
   // 409: a business rule rejected an otherwise well-formed request
   BID_TOO_LOW = 'BID_TOO_LOW',
@@ -27,8 +33,22 @@ export enum ErrorCode {
   ARTWORK_ALREADY_AT_AUCTION = 'ARTWORK_ALREADY_AT_AUCTION',
   /** Socket.IO only: a connection asked to watch more auctions than the per-connection cap. */
   TOO_MANY_WATCHED_AUCTIONS = 'TOO_MANY_WATCHED_AUCTIONS',
+  /** A ledger transaction already exists for this purchase: it was paid out once already. */
+  PURCHASE_ALREADY_POSTED = 'PURCHASE_ALREADY_POSTED',
+  AUCTION_NOT_SOLD = 'AUCTION_NOT_SOLD',
+  PURCHASE_ALREADY_PAID = 'PURCHASE_ALREADY_PAID',
+  /** The buyer completed checkout; the provider's confirmation has not arrived yet. */
+  PAYMENT_IN_PROGRESS = 'PAYMENT_IN_PROGRESS',
 
   // 500: our bug, never the client's fault
   INVARIANT_VIOLATION = 'INVARIANT_VIOLATION',
+  /** A ledger posting that does not balance, or is otherwise malformed. Always our bug. */
+  INVALID_LEDGER_POSTING = 'INVALID_LEDGER_POSTING',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
+
+  // 502 / 503: a dependency failed or is not set up
+  /** 502: the payment provider answered with an error or could not be reached. */
+  PAYMENT_PROVIDER_ERROR = 'PAYMENT_PROVIDER_ERROR',
+  /** 503: no payment provider is configured (no Stripe keys); everything else still works. */
+  PAYMENTS_UNAVAILABLE = 'PAYMENTS_UNAVAILABLE',
 }

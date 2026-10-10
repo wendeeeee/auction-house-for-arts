@@ -22,6 +22,9 @@ describe('loadConfiguration', () => {
       redis: { url: 'redis://localhost:56380' },
       messaging: { rabbitMqUrl: 'amqp://art_auction:art_auction@localhost:56727' },
       auctions: { softCloseWindowSeconds: 120 },
+      ledger: { platformFeeBps: 1_000 },
+      payments: { stripe: null },
+      web: { baseUrl: 'http://localhost:5201' },
     });
   });
 
@@ -37,6 +40,10 @@ describe('loadConfiguration', () => {
       OTEL_EXPORTER_OTLP_ENDPOINT: 'http://collector:4318',
       OTEL_SDK_DISABLED: 'true',
       SOFT_CLOSE_WINDOW_SECONDS: '30',
+      PLATFORM_FEE_BPS: '1250',
+      STRIPE_SECRET_KEY: 'sk_test_example',
+      STRIPE_WEBHOOK_SECRET: 'whsec_example',
+      WEB_BASE_URL: 'https://art.example.com/',
     });
     expect(config).toEqual({
       nodeEnvironment: 'production',
@@ -46,6 +53,9 @@ describe('loadConfiguration', () => {
       redis: { url: 'rediss://cache:6380' },
       messaging: { rabbitMqUrl: 'amqps://user:secret@broker:5671' },
       auctions: { softCloseWindowSeconds: 30 },
+      ledger: { platformFeeBps: 1_250 },
+      payments: { stripe: { secretKey: 'sk_test_example', webhookSecret: 'whsec_example' } },
+      web: { baseUrl: 'https://art.example.com' },
     });
   });
 
@@ -68,6 +78,7 @@ describe('loadConfiguration', () => {
       RABBITMQ_URL: 'http://localhost:5672',
       OTEL_SDK_DISABLED: 'yes',
       SOFT_CLOSE_WINDOW_SECONDS: '0',
+      PLATFORM_FEE_BPS: '5001',
     });
     expect(problems.map((problem) => problem.split(' ')[0])).toEqual([
       'NODE_ENV',
@@ -78,8 +89,23 @@ describe('loadConfiguration', () => {
       'RABBITMQ_URL',
       'OTEL_SDK_DISABLED',
       'SOFT_CLOSE_WINDOW_SECONDS',
+      'PLATFORM_FEE_BPS',
     ]);
     expect(problems).toContain('DATABASE_URL must be a postgres:// connection URL');
+  });
+
+  it('refuses a live Stripe key, so this project can never move real money', () => {
+    expect(problemsFor({ DATABASE_URL, STRIPE_SECRET_KEY: 'sk_live_example', STRIPE_WEBHOOK_SECRET: 'whsec_example' })).toEqual([
+      'STRIPE_SECRET_KEY must be a Stripe test-mode key (sk_test_…)',
+    ]);
+  });
+
+  it('requires both Stripe variables or neither, without echoing the secret', () => {
+    const problems = problemsFor({ DATABASE_URL, STRIPE_SECRET_KEY: 'sk_test_example' });
+    expect(problems).toEqual([
+      'STRIPE_WEBHOOK_SECRET must be set together with the other Stripe variable (or neither, to run without payments)',
+    ]);
+    expect(problems.join(' ')).not.toContain('sk_test_example');
   });
 
   it('ignores unrelated environment variables', () => {

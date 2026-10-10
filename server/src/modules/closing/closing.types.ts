@@ -20,3 +20,12 @@ export interface CloseDueAuctionsSummary {
   readonly skipped: number;
   readonly failed: number;
 }
+
+export interface AuctionResult {
+  readonly auctionId: string;
+  readonly auctionSlug: string;
+  readonly artworkId: string;
+  readonly sellerUserId: string;
+  /** Null until the close worker records the outcome. */
+  readonly close: AuctionClose | null;
+}

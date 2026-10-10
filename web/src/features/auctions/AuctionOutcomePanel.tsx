@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { AuctionOutcomeView } from '../../shared/api/api-types';
 import { useApiQuery } from '../../shared/api/use-api-query';
 import { formatCents } from '../../shared/format/money';
+import { PaymentStatusPanel } from '../checkout/PaymentStatusPanel';
 import { useDemoUserId } from '../demo-user/use-demo-user-id';
 import { getAuctionOutcome } from './auctions-api';
 
@@ -49,9 +50,8 @@ export function AuctionOutcomePanel({ slug, refreshKey }: { slug: string; refres
               </>
             )}
           </p>
-          {shown.youWon && (
-            <p className="auction-outcome__note">You won this lot. Payment will open here once checkout is available.</p>
-          )}
+          {shown.youWon && <p className="auction-outcome__note">You won this lot.</p>}
+          {demoUserId !== null && <PaymentStatusPanel slug={slug} refreshKey={refreshKey} />}
         </>
       )}
       {shown.outcome === 'reserve_not_met' && (

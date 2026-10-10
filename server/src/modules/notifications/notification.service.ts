@@ -2,10 +2,11 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Clock } from '../../common/clock';
 import { AuthenticatedUser } from '../../common/identity';
 import { withSpan } from '../../common/tracing';
-import { AuctionClosedPayload } from '../outbox';
+import { AuctionClosedPayload, PurchasePaidPayload } from '../outbox';
 import { NOTIFICATION_CREATED_EVENT, REALTIME_EMITTER, RealtimeEmitter } from '../realtime';
 import { decideNotificationRecipients } from './notification-recipients';
 import { NotificationRepository } from './notification.repository';
+import { decidePurchasePaidRecipients } from './purchase-paid-recipients';
 import { toNotificationView } from './notification.view';
 import { Notification } from './notifications.types';
 import { NotificationNotFoundError } from './notifications.errors';
@@ -41,6 +42,29 @@ export class NotificationService {
             artworkTitle: event.artworkTitle,
             outcome: event.outcome,
             hammerPriceCents: event.hammerPriceCents,
+          },
+          createdAt,
+        })),
+      );
+      for (const notification of created) this.alert(notification);
+      return created;
+    });
+  }
+
+  async deliverPurchasePaid(eventId: string, event: PurchasePaidPayload): Promise<Notification[]> {
+    return withSpan('notifications.deliver_purchase_paid', { 'event.id': eventId, 'auction.slug': event.auctionSlug }, async () => {
+      const createdAt = this.clock.now();
+      const created = await this.notificationRepository.insertIfNew(
+        decidePurchasePaidRecipients(event).map((recipient) => ({
+          eventId,
+          recipientUserId: recipient.recipientUserId,
+          kind: recipient.kind,
+          payload: {
+            auctionSlug: event.auctionSlug,
+            artworkTitle: event.artworkTitle,
+            outcome: 'sold' as const,
+            hammerPriceCents: event.amountCents,
+            earnedCents: recipient.earnedCents,
           },
           createdAt,
         })),

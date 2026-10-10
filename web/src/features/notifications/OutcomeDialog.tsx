@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router';
+import { PayNowButton } from '../checkout/PayNowButton';
 import { describeNotification } from './notification-message';
 import { useNotifications } from './NotificationsProvider';
 
@@ -35,8 +36,11 @@ export function OutcomeDialog() {
           </h2>
           <p className="outcome-dialog__detail">{message.detail}</p>
           <div className="button-row">
+            {current.kind === 'bidder_auction_won' && (
+              <PayNowButton slug={current.auctionSlug} onStarted={() => markRead(current.id)} />
+            )}
             <Link
-              className={`button${message.isPositive ? ' button--gold' : ''}`}
+              className={`button${current.kind === 'bidder_auction_won' ? ' button--outline' : message.isPositive ? ' button--gold' : ''}`}
               to={`/auctions/${current.auctionSlug}`}
               onClick={() => {
                 markRead(current.id);
