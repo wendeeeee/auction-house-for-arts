@@ -88,6 +88,12 @@ export class PurchaseService {
     });
   }
 
+  /** By auction ID, for the buyer's own won auctions. An auction without a purchase row has not been paid. */
+  async findPaymentStatusesByAuctionIds(auctionIds: readonly string[]): Promise<Map<string, 'awaiting_payment' | 'paid'>> {
+    const purchases = await this.purchaseRepository.findByAuctionIds(auctionIds);
+    return new Map(purchases.map((purchase) => [purchase.auctionId, purchase.status === 'paid' ? 'paid' : 'awaiting_payment']));
+  }
+
   async getCheckoutStatus(viewer: AuthenticatedUser, auctionSlug: string): Promise<CheckoutStatus> {
     const sale = await this.loadSoldAuction(auctionSlug);
     const role = decideCheckoutViewerRole({

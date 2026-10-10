@@ -6,6 +6,7 @@ import { TracingModule } from './common/tracing';
 import { ConfigModule } from './config';
 import { DatabaseModule } from './database';
 import { ArtistsModule } from './modules/artists';
+import { AssistantModule } from './modules/assistant';
 import { ArtworksModule } from './modules/artworks';
 import { AuctionsModule } from './modules/auctions';
 import { ClosingModule } from './modules/closing';
@@ -13,6 +14,7 @@ import { HealthModule } from './modules/health';
 import { LedgerModule } from './modules/ledger';
 import { NotificationsModule } from './modules/notifications';
 import { PurchasesModule } from './modules/purchases';
+import { SearchModule } from './modules/search';
 import { UsersModule } from './modules/users';
 
 @Module({
@@ -30,6 +32,8 @@ import { UsersModule } from './modules/users';
     NotificationsModule,
     LedgerModule,
     PurchasesModule,
+    SearchModule,
+    AssistantModule,
   ],
   providers: [
     // Global: every route resolves X-Demo-User-Id; @RequireUser() routes also reject anonymous.

@@ -13,3 +13,5 @@ process.env.OTEL_SDK_DISABLED = 'true';
 // Never Stripe: tests use FakePaymentsProvider, or the 503 stand-in when no provider is overridden.
 delete process.env.STRIPE_SECRET_KEY;
 delete process.env.STRIPE_WEBHOOK_SECRET;
+// Never a real model: tests use ScriptedAssistantLlm, or the offline stand-in.
+delete process.env.OPENAI_API_KEY;

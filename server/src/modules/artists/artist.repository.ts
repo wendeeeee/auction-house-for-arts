@@ -39,6 +39,18 @@ export class ArtistRepository {
     return rows.map(toArtist);
   }
 
+  /** Search's `artist` filter: a name substring, the exact slug, or the artist's own user account. */
+  async findIdsByNameSlugOrUser(text: string, userId: string | null): Promise<string[]> {
+    const { rows } = await this.unitOfWork
+      .client()
+      .query<{ id: string }>(`SELECT id FROM artists WHERE name ILIKE $1 OR slug = $2 OR user_id = $3`, [
+        `%${escapeLikePattern(text)}%`,
+        text.toLowerCase(),
+        userId,
+      ]);
+    return rows.map((row) => row.id);
+  }
+
   /** Case-insensitive substring match on the name; served by the trigram index. */
   async findIdsByNameContaining(text: string): Promise<string[]> {
     const { rows } = await this.unitOfWork

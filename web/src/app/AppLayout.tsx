@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { AssistantPanel } from '../features/assistant/AssistantPanel';
 import { OutbidToasts } from '../features/auctions/OutbidToasts';
 import { DemoUserSwitcher } from '../features/demo-user/DemoUserSwitcher';
 import { useDemoUserId } from '../features/demo-user/use-demo-user-id';
 import { NotificationBell } from '../features/notifications/NotificationBell';
 import { NotificationsProvider } from '../features/notifications/NotificationsProvider';
 import { OutcomeDialog } from '../features/notifications/OutcomeDialog';
+import { SiteSearchForm } from '../features/search/SiteSearchForm';
 import { CloseIcon, MenuIcon } from '../shared/ui/icons';
 
 /** Section links point at anchors on the landing page; plain <a> so the browser scrolls to them. */
 const NAVIGATION = [
   { label: 'Auctions', to: '/auctions', isRoute: true },
   { label: 'Catalog', to: '/artworks', isRoute: true },
+  { label: 'Search', to: '/search', isRoute: true },
   { label: 'How bidding works', to: '/#how-to-bid', isRoute: false },
   { label: 'Artists', to: '/#artists', isRoute: false },
   { label: 'For sellers', to: '/#sellers', isRoute: false },
@@ -76,6 +79,7 @@ export function AppLayout() {
               <NavigationLinks className="site-nav__link" />
             </nav>
             <div className="site-header__actions">
+              <SiteSearchForm className="site-search--header" />
               <DemoUserSwitcher />
             </div>
             <NotificationBell />
@@ -92,6 +96,7 @@ export function AppLayout() {
           </div>
           {isMenuOpen && (
             <div id="mobile-menu" className="mobile-menu container">
+              <SiteSearchForm />
               <NavigationLinks className="mobile-menu__link" />
               <div className="mobile-menu__switcher">
                 <DemoUserSwitcher />
@@ -104,6 +109,7 @@ export function AppLayout() {
           <Outlet />
         </main>
 
+        <AssistantPanel />
         <OutbidToasts />
         <OutcomeDialog />
 

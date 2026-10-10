@@ -32,6 +32,13 @@ export class UserRepository implements IdentityLookup {
     return rows.map(toUser);
   }
 
+  async findByHandle(handle: string): Promise<User | null> {
+    const { rows } = await this.unitOfWork
+      .client()
+      .query<UserRow>(`SELECT ${USER_COLUMNS} FROM users WHERE handle = $1`, [handle]);
+    return rows[0] ? toUser(rows[0]) : null;
+  }
+
   async listAll(): Promise<User[]> {
     const { rows } = await this.unitOfWork
       .client()

@@ -32,6 +32,8 @@ describe('loadConfiguration', () => {
         secretAccessKey: 'art_auction_secret',
         bucket: 'artwork-images',
       },
+      languageModel: { openAi: null },
+      assistant: { turnsPerHour: 50 },
     });
   });
 
@@ -56,6 +58,10 @@ describe('loadConfiguration', () => {
       S3_ACCESS_KEY_ID: 'access',
       S3_SECRET_ACCESS_KEY: 'secret',
       S3_BUCKET: 'art-images',
+      OPENAI_API_KEY: 'sk-example',
+      OPENAI_MODEL: 'local-model',
+      OPENAI_BASE_URL: 'http://localhost:11434/v1',
+      ASSISTANT_TURNS_PER_HOUR: '20',
     });
     expect(config).toEqual({
       nodeEnvironment: 'production',
@@ -75,6 +81,10 @@ describe('loadConfiguration', () => {
         secretAccessKey: 'secret',
         bucket: 'art-images',
       },
+      languageModel: {
+        openAi: { apiKey: 'sk-example', model: 'local-model', baseUrl: 'http://localhost:11434/v1' },
+      },
+      assistant: { turnsPerHour: 20 },
     });
   });
 
@@ -129,6 +139,12 @@ describe('loadConfiguration', () => {
 
   it('rejects a bucket name S3 would refuse', () => {
     expect(problemsFor({ DATABASE_URL, S3_BUCKET: 'Artwork_Images' })).toEqual(['S3_BUCKET must be a valid S3 bucket name']);
+  });
+
+  it('validates the language model settings', () => {
+    const problems = problemsFor({ DATABASE_URL, OPENAI_BASE_URL: 'localhost:11434', ASSISTANT_TURNS_PER_HOUR: '0' });
+    expect(problems.map((problem) => problem.split(' ')[0])).toEqual(['OPENAI_BASE_URL', 'ASSISTANT_TURNS_PER_HOUR']);
+    expect(problems).toContain('OPENAI_BASE_URL must be an http(s) URL');
   });
 
   it('ignores unrelated environment variables', () => {

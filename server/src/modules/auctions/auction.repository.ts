@@ -51,6 +51,11 @@ export interface AuctionListFilter {
   readonly now: Date;
   /** When set, only auctions of these artworks (the artworks module resolved a medium filter). */
   readonly artworkIds?: readonly string[];
+  /** Price bounds on the visible price, inclusive. */
+  readonly minimumPriceCents?: number;
+  readonly maximumPriceCents?: number;
+  /** Only auctions whose end is at or before this instant. */
+  readonly endsAtOrBefore?: Date;
   readonly sort: AuctionListSort;
   readonly limit: number;
 }
@@ -160,6 +165,19 @@ export class AuctionRepository {
     }
   }
 
+  /** Auctions the user sells or has a maximum on, latest end first. */
+  async listForParticipant(userId: string, limit: number): Promise<Auction[]> {
+    const { rows } = await this.unitOfWork.client().query<AuctionRow>(
+      `SELECT ${AUCTION_COLUMNS} FROM auctions
+        WHERE seller_user_id = $1
+           OR id IN (SELECT auction_id FROM max_bids WHERE bidder_user_id = $1)
+        ORDER BY ends_at DESC, id
+        LIMIT $2`,
+      [userId, limit],
+    );
+    return rows.map(toAuction);
+  }
+
   async list(filter: AuctionListFilter): Promise<Auction[]> {
     const conditions: string[] = [];
     const parameters: unknown[] = [];
@@ -176,6 +194,9 @@ export class AuctionRepository {
     if (filter.artworkIds !== undefined) {
       conditions.push(`artwork_id = ANY(${bind(filter.artworkIds)}::uuid[])`);
     }
+    if (filter.minimumPriceCents !== undefined) conditions.push(`current_price_cents >= ${bind(filter.minimumPriceCents)}`);
+    if (filter.maximumPriceCents !== undefined) conditions.push(`current_price_cents <= ${bind(filter.maximumPriceCents)}`);
+    if (filter.endsAtOrBefore !== undefined) conditions.push(`ends_at <= ${bind(filter.endsAtOrBefore)}`);
 
     const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const { rows } = await this.unitOfWork

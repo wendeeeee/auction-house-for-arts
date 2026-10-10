@@ -7,6 +7,7 @@ import { CheckoutReturnPage } from '../features/checkout/CheckoutReturnPage';
 import { EarningsPage } from '../features/earnings/EarningsPage';
 import { HomePage } from '../features/home/HomePage';
 import { NotFoundPage } from '../features/not-found/NotFoundPage';
+import { SearchPage } from '../features/search/SearchPage';
 import { AppLayout } from './AppLayout';
 
 export function App() {
@@ -22,6 +23,7 @@ export function App() {
           <Route path="auctions/:slug/checkout/success" element={<CheckoutReturnPage result="success" />} />
           <Route path="auctions/:slug/checkout/cancelled" element={<CheckoutReturnPage result="cancelled" />} />
           <Route path="earnings" element={<EarningsPage />} />
+          <Route path="search" element={<SearchPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

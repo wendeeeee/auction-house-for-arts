@@ -34,6 +34,18 @@ export class MaximumBidRepository {
     return rows[0] ? toMaximumBid(rows[0]) : null;
   }
 
+  /** Only this bidder's own maximums, so callers can show them back to that bidder and no one else. */
+  async listForBidderOnAuctions(bidderUserId: string, auctionIds: readonly string[]): Promise<Map<string, number>> {
+    if (auctionIds.length === 0) return new Map();
+    const { rows } = await this.unitOfWork
+      .client()
+      .query<{ auction_id: string; max_cents: number }>(
+        'SELECT auction_id, max_cents FROM max_bids WHERE bidder_user_id = $1 AND auction_id = ANY($2::uuid[])',
+        [bidderUserId, auctionIds],
+      );
+    return new Map(rows.map((row) => [row.auction_id, row.max_cents]));
+  }
+
   /**
    * Places a first maximum, or replaces the bidder's previous one. A replacement takes a new
    * placement number, because the raised amount was committed to now, and keeps `placed_at`

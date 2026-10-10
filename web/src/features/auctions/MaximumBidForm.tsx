@@ -1,7 +1,9 @@
-import { type FormEvent, useId, useState } from 'react';
+import { type FormEvent, useEffect, useId, useState } from 'react';
+import { useLocation } from 'react-router';
 import type { AuctionDetailView, PlaceMaximumBidResultView } from '../../shared/api/api-types';
 import { formatCents, parseDollarsToCents } from '../../shared/format/money';
 import { type BidMessage, describeBidOutcome, describeBidRejection } from './bid-outcome-message';
+import { suggestedMaximumBidFrom } from '../assistant/assistant-context';
 import { placeMaximumBid } from './auctions-api';
 
 interface MaximumBidFormProps {
@@ -18,7 +20,12 @@ interface MaximumBidFormProps {
 export function MaximumBidForm({ auction, onBidPlaced }: MaximumBidFormProps) {
   const inputId = useId();
   const hintId = useId();
-  const [draft, setDraft] = useState('');
+  // A Concierge suggestion arrives as ?maximumBid=; it only fills the field, the bidder still submits.
+  const suggestedDraft = suggestedMaximumBidFrom(useLocation().search);
+  const [draft, setDraft] = useState(suggestedDraft);
+  useEffect(() => {
+    if (suggestedDraft) setDraft(suggestedDraft);
+  }, [suggestedDraft]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<BidMessage | null>(null);
 
@@ -74,6 +81,7 @@ export function MaximumBidForm({ auction, onBidPlaced }: MaximumBidFormProps) {
       </div>
       <p id={hintId} className="bid-form__hint">
         {hint} We bid for you only as much as needed to lead. Others never see your maximum.
+        {suggestedDraft && draft === suggestedDraft && ' Pre-filled from the Concierge’s suggestion: review it before you bid.'}
       </p>
 
       {message && (
