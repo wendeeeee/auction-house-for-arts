@@ -25,6 +25,10 @@ export enum ErrorCode {
   NOT_AUCTION_WINNER = 'NOT_AUCTION_WINNER',
   /** 403: only the buyer and the seller can see a purchase. */
   NOT_PURCHASE_PARTY = 'NOT_PURCHASE_PARTY',
+  /** 404: also the answer for another user's session, so its existence is not revealed. */
+  ASSISTANT_SESSION_NOT_FOUND = 'ASSISTANT_SESSION_NOT_FOUND',
+  /** 429: too many Concierge messages from one user in the current hour. */
+  ASSISTANT_RATE_LIMITED = 'ASSISTANT_RATE_LIMITED',
 
   // 409: a business rule rejected an otherwise well-formed request
   BID_TOO_LOW = 'BID_TOO_LOW',
@@ -58,4 +62,6 @@ export enum ErrorCode {
   PAYMENT_PROVIDER_ERROR = 'PAYMENT_PROVIDER_ERROR',
   /** 503: no payment provider is configured (no Stripe keys); everything else still works. */
   PAYMENTS_UNAVAILABLE = 'PAYMENTS_UNAVAILABLE',
+  /** 503: no language model is configured, or the model call failed. Search still works on keywords. */
+  ASSISTANT_UNAVAILABLE = 'ASSISTANT_UNAVAILABLE',
 }

@@ -80,6 +80,25 @@ export class ArtworkCatalogService {
     return this.artworkRepository.findIdsByMedium(medium);
   }
 
+  /** For search: the artworks matching every keyword (title, description, or artist name), the medium, and the artists. */
+  async findArtworkIdsMatching(criteria: {
+    readonly keywords: readonly string[];
+    readonly medium: ArtworkMedium | null;
+    readonly artistIds: readonly string[] | null;
+  }): Promise<string[]> {
+    const keywords = await Promise.all(
+      criteria.keywords.map(async (text) => ({
+        text,
+        artistIds: await this.artistsService.findArtistIdsByNameContaining(text),
+      })),
+    );
+    return this.artworkRepository.findIdsMatching({
+      keywords,
+      medium: criteria.medium ?? undefined,
+      artistIds: criteria.artistIds ?? undefined,
+    });
+  }
+
   private async attachArtistsAndImages(artworks: readonly Artwork[]): Promise<ArtworkWithArtist[]> {
     const [artists, imagesByArtworkId] = await Promise.all([
       this.artistsService.findArtistsByIds(artworks.map((artwork) => artwork.artistId)),

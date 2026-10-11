@@ -52,6 +52,14 @@ export class PurchaseRepository {
     return rows[0] ? toPurchase(rows[0]) : null;
   }
 
+  async findByAuctionIds(auctionIds: readonly string[]): Promise<Purchase[]> {
+    if (auctionIds.length === 0) return [];
+    const { rows } = await this.unitOfWork
+      .client()
+      .query<PurchaseRow>(`SELECT ${PURCHASE_COLUMNS} FROM purchases WHERE auction_id = ANY($1::uuid[])`, [auctionIds]);
+    return rows.map(toPurchase);
+  }
+
   async findById(purchaseId: string): Promise<Purchase | null> {
     const { rows } = await this.unitOfWork
       .client()

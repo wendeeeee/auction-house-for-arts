@@ -10,6 +10,10 @@ import { User } from './users.types';
 export class UsersService {
   constructor(private readonly userRepository: UserRepository) {}
 
+  findUserByHandle(handle: string): Promise<User | null> {
+    return this.userRepository.findByHandle(handle);
+  }
+
   findUsersByIds(ids: readonly string[]): Promise<User[]> {
     return this.userRepository.findByIds([...new Set(ids)]);
   }

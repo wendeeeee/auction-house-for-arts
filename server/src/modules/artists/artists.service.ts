@@ -22,6 +22,10 @@ export class ArtistsService {
     return this.artistRepository.findByIds([...new Set(ids)]);
   }
 
+  findArtistIdsByNameSlugOrUser(text: string, userId: string | null): Promise<string[]> {
+    return this.artistRepository.findIdsByNameSlugOrUser(text, userId);
+  }
+
   findArtistIdsByNameContaining(text: string): Promise<string[]> {
     return this.artistRepository.findIdsByNameContaining(text);
   }

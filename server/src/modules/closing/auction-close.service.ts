@@ -127,6 +127,10 @@ export class AuctionCloseService {
     return { close, winnerHandle, viewerUserId: viewer?.id ?? null };
   }
 
+  findClosesByAuctionIds(auctionIds: readonly string[]): Promise<AuctionClose[]> {
+    return this.auctionCloseRepository.findByAuctionIds(auctionIds);
+  }
+
   async getAuctionResultBySlug(auctionSlug: string): Promise<AuctionResult> {
     const auction = await this.auctionClosing.findAuctionBySlug(auctionSlug);
     if (!auction) throw new AuctionNotFoundError(auctionSlug);

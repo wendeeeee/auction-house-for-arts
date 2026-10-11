@@ -59,6 +59,22 @@ export interface StorageConfig {
   readonly bucket: string;
 }
 
+export interface OpenAiConfig {
+  readonly apiKey: string;
+  readonly model: string;
+  /** Any OpenAI-compatible endpoint; undefined for OpenAI itself. */
+  readonly baseUrl: string | undefined;
+}
+
+export interface LanguageModelConfig {
+  /** Null without OPENAI_API_KEY: the Concierge is offline and search uses keywords only. */
+  readonly openAi: OpenAiConfig | null;
+}
+
+export interface AssistantConfig {
+  readonly turnsPerHour: number;
+}
+
 export interface AppConfig {
   readonly nodeEnvironment: NodeEnvironment;
   readonly api: { readonly port: number };
@@ -71,6 +87,8 @@ export interface AppConfig {
   readonly payments: PaymentsConfig;
   readonly web: WebConfig;
   readonly storage: StorageConfig;
+  readonly languageModel: LanguageModelConfig;
+  readonly assistant: AssistantConfig;
 }
 
 /** Thrown at boot. Not a DomainError: there is no request to answer, only a process to stop. */
@@ -122,6 +140,10 @@ const environmentSchema = z.object({
     .string()
     .regex(/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/, { error: 'must be a valid S3 bucket name' })
     .default('artwork-images'),
+  OPENAI_API_KEY: z.string().min(1).optional(),
+  OPENAI_MODEL: z.string().min(1).default('gpt-5.2'),
+  OPENAI_BASE_URL: z.url({ protocol: /^https?$/, error: 'must be an http(s) URL' }).optional(),
+  ASSISTANT_TURNS_PER_HOUR: z.coerce.number().int().min(1).max(10_000).default(50),
 });
 
 /** Half a Stripe configuration would accept checkouts whose payments could never be confirmed. */
@@ -175,6 +197,13 @@ export function loadConfiguration(environment: NodeJS.ProcessEnv): AppConfig {
       secretAccessKey: values.S3_SECRET_ACCESS_KEY,
       bucket: values.S3_BUCKET,
     },
+    languageModel: {
+      openAi:
+        values.OPENAI_API_KEY === undefined
+          ? null
+          : { apiKey: values.OPENAI_API_KEY, model: values.OPENAI_MODEL, baseUrl: values.OPENAI_BASE_URL },
+    },
+    assistant: { turnsPerHour: values.ASSISTANT_TURNS_PER_HOUR },
   };
 }
 

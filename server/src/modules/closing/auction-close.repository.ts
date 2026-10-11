@@ -24,6 +24,16 @@ export class AuctionCloseRepository {
     );
   }
 
+  async findByAuctionIds(auctionIds: readonly string[]): Promise<AuctionClose[]> {
+    if (auctionIds.length === 0) return [];
+    const { rows } = await this.unitOfWork
+      .client()
+      .query<AuctionCloseRow>(`SELECT ${AUCTION_CLOSE_COLUMNS} FROM auction_closes WHERE auction_id = ANY($1::uuid[])`, [
+        auctionIds,
+      ]);
+    return rows.map(toAuctionClose);
+  }
+
   async findByAuctionId(auctionId: string): Promise<AuctionClose | null> {
     const { rows } = await this.unitOfWork
       .client()

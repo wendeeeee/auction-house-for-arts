@@ -9,7 +9,7 @@ import { UsersService } from '../users';
 import { AuctionRepository, ONE_UNCLOSED_AUCTION_PER_ARTWORK_INDEX } from './auction.repository';
 import { decideAuctionEndProblem } from './auction-schedule';
 import { ArtworkAlreadyAtAuctionError, AuctionNotFoundError, NotArtworkOwnerError } from './auctions.errors';
-import { Auction, BidHistoryEntry, MaximumBid } from './auctions.types';
+import { Auction, AuctionListSort, AuctionStatusFilter, BidHistoryEntry, MaximumBid } from './auctions.types';
 import { BidHistoryRepository } from './bid-history.repository';
 import { CreateAuctionBody } from './dto/create-auction.dto';
 import { ListAuctionsQuery } from './dto/list-auctions.dto';
@@ -21,6 +21,22 @@ const DETAIL_HISTORY_LIMIT = 50;
 export interface AuctionListing {
   readonly auction: Auction;
   readonly artwork: ArtworkWithArtist;
+}
+
+export interface ParticipantAuction extends AuctionListing {
+  /** The participant's own maximum; null when they are the seller or have not bid. */
+  readonly ownMaximumBidCents: number | null;
+}
+
+export interface AuctionSearchCriteria {
+  /** Null: no artwork filter. An empty list matches nothing. */
+  readonly artworkIds: readonly string[] | null;
+  readonly status: AuctionStatusFilter;
+  readonly minimumPriceCents: number | null;
+  readonly maximumPriceCents: number | null;
+  readonly endingWithinHours: number | null;
+  readonly sort: AuctionListSort;
+  readonly limit: number;
 }
 
 export interface AuctionDetails extends AuctionListing {
@@ -87,6 +103,37 @@ export class AuctionService {
       limit: query.limit,
     });
     return this.attachArtworks(auctions);
+  }
+
+  async searchAuctions(criteria: AuctionSearchCriteria): Promise<AuctionListing[]> {
+    if (criteria.artworkIds !== null && criteria.artworkIds.length === 0) return [];
+    const now = this.clock.now();
+    const auctions = await this.auctionRepository.list({
+      status: criteria.status,
+      now,
+      artworkIds: criteria.artworkIds ?? undefined,
+      minimumPriceCents: criteria.minimumPriceCents ?? undefined,
+      maximumPriceCents: criteria.maximumPriceCents ?? undefined,
+      endsAtOrBefore:
+        criteria.endingWithinHours === null
+          ? undefined
+          : new Date(now.getTime() + criteria.endingWithinHours * 60 * 60 * 1_000),
+      sort: criteria.sort,
+      limit: criteria.limit,
+    });
+    return this.attachArtworks(auctions);
+  }
+
+  async listAuctionsForParticipant(userId: string, limit: number): Promise<ParticipantAuction[]> {
+    const auctions = await this.auctionRepository.listForParticipant(userId, limit);
+    const [listings, ownMaximums] = await Promise.all([
+      this.attachArtworks(auctions),
+      this.maximumBidRepository.listForBidderOnAuctions(
+        userId,
+        auctions.map((auction) => auction.id),
+      ),
+    ]);
+    return listings.map((listing) => ({ ...listing, ownMaximumBidCents: ownMaximums.get(listing.auction.id) ?? null }));
   }
 
   async getAuctionDetails(slug: string, viewer: AuthenticatedUser | null): Promise<AuctionDetails> {

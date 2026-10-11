@@ -7,6 +7,7 @@ import { ArrowRightIcon, ListIcon, PaletteIcon, ScrollIcon, ShieldIcon } from '.
 import { ErrorState, LoadingState } from '../../shared/ui/StatusMessage';
 import { artworkPlaceholderDataUri } from '../artworks/artwork-placeholder';
 import { listArtists, listArtworks } from '../artworks/artworks-api';
+import { searchHref } from '../search/search-filters';
 import { type CatalogFigures, computeCatalogFigures } from './catalog-figures';
 
 /** Enough for the whole demo catalog; the figures say "in the catalog", which stays true at this size. */
@@ -67,7 +68,7 @@ function HeroSection() {
   function search(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = query.trim();
-    navigate(text ? `/artworks?query=${encodeURIComponent(text)}` : '/artworks');
+    navigate(searchHref(text));
   }
 
   return (
@@ -92,19 +93,19 @@ function HeroSection() {
           </div>
           <form className="search-panel" role="search" onSubmit={search}>
             <label className="visually-hidden" htmlFor="hero-search">
-              Search titles and artists
+              Search auctions
             </label>
             <input
               id="hero-search"
               className="text-input search-panel__input"
               type="search"
-              placeholder="Search titles and artists"
-              maxLength={100}
+              placeholder="Try “open oil paintings under $5k”"
+              maxLength={200}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
             <button className="button button--primary" type="submit">
-              Search works
+              Search auctions
             </button>
           </form>
         </div>
