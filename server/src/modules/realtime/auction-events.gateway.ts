@@ -27,19 +27,6 @@ import {
  */
 export const MAXIMUM_WATCHED_AUCTIONS_PER_CONNECTION = 20;
 
-/**
- * The Socket.IO endpoint at `/socket.io` (outside the `/api` prefix, which applies to HTTP
- * routes only).
- *
- * - **WebSocket transport only:** with no HTTP long-polling fallback, a session is one TCP
- *   connection, so several API instances behind a load balancer need no sticky sessions.
- * - **Identity at the handshake:** browsers cannot set headers on a WebSocket, so the client
- *   sends `auth: { demoUserId }`, checked with the same rules as `X-Demo-User-Id`. No value
- *   means anonymous; a malformed or unknown one refuses the connection, as HTTP answers 401.
- * - **Rooms:** the server alone joins a socket to `user:{id}`, from the verified handshake.
- *   Clients can only ask for `auction:{slug}` rooms, and the slug cannot contain `:`, so no
- *   message can reach another user's room.
- */
 @WebSocketGateway({ transports: ['websocket'] })
 export class AuctionEventsGateway implements OnGatewayInit<Server>, OnGatewayConnection<Socket> {
   private readonly logger = new Logger(AuctionEventsGateway.name);
@@ -73,12 +60,12 @@ export class AuctionEventsGateway implements OnGatewayInit<Server>, OnGatewayCon
       return {
         ok: false,
         error: {
-          code: ErrorCode.TOO_MANY_WATCHED_AUCTIONS,
+          code: ErrorCode.REQUEST_REJECTED,
           message: `A connection can watch at most ${MAXIMUM_WATCHED_AUCTIONS_PER_CONNECTION} auctions.`,
         },
       };
     }
-    // Watching an auction that does not exist is harmless: nothing is ever sent to its room.
+    
     await socket.join(room);
     return { ok: true };
   }
@@ -113,14 +100,14 @@ export class AuctionEventsGateway implements OnGatewayInit<Server>, OnGatewayCon
         data: { code: ErrorCode.UNAUTHENTICATED, message: error.message },
       });
     }
-    // A failed lookup (the database is down) is ours, not the client's: log it, say little.
+  
     this.logger.error(`Socket handshake failed: ${error instanceof Error ? error.message : String(error)}`);
     const message = 'The server could not check this connection.';
     return Object.assign(new Error(message), { data: { code: ErrorCode.INTERNAL_ERROR, message } });
   }
 }
 
-/** Not a DomainError: it never reaches the HTTP filter; it becomes a Socket.IO `connect_error`. */
+/**socket.IO `connect_error`ttp filter is not reached. */
 class UnknownDemoUserError extends Error {
   constructor() {
     super('demoUserId is not a known demo user.');
@@ -132,12 +119,11 @@ function rejectInvalidMessage(): RealtimeAcknowledgement {
   return { ok: false, error: { code: ErrorCode.VALIDATION_FAILED, message: 'Expected { slug } with an auction slug.' } };
 }
 
-/** Socket.IO types `socket.data` as `any`; this is the one place that gives it a shape. */
+
 function socketData(socket: Socket): RealtimeSocketData {
   return socket.data as RealtimeSocketData;
 }
 
-/** Every socket is also in a room named after its own ID; only `auction:` rooms count. */
 function countAuctionRooms(socket: Socket): number {
   return [...socket.rooms].filter((room) => room.startsWith(auctionRoom(''))).length;
 }
