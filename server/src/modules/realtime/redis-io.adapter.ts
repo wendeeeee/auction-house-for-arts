@@ -9,15 +9,7 @@ import { InvariantViolationError } from '../../common/errors';
 type RedisClient = ReturnType<typeof createClient>;
 
 /**
- * Socket.IO with the Redis adapter, so several API instances share rooms: an emit to
- * `auction:{slug}` on one instance is published to Redis and delivered by every instance to
- * its own sockets in that room.
- *
- * Used by `main.ts` only. Tests run on Nest's default in-memory adapter (one instance needs
- * no Redis), except the integration test that proves two instances share rooms.
- *
- * Redis carries only these fan-out messages; it holds no state of record. If Redis is down,
- * bids still commit, and viewers catch up when their refetch-on-reconnect runs.
+an emit to `auction:{slug}` on one instance is published to Redis and delivered by every instance to its own sockets in that room.
  */
 export class RedisIoAdapter extends IoAdapter {
   private readonly redisLogger = new Logger(RedisIoAdapter.name);
@@ -34,12 +26,11 @@ export class RedisIoAdapter extends IoAdapter {
    * receives their broadcasts).
    */
   async connectToRedis(redisUrl: string, options: { channelPrefix?: string } = {}): Promise<void> {
-    // Two connections: a Redis connection in subscriber mode can run no other commands.
+   
     const publisher = createClient({ url: redisUrl });
     const subscriber = publisher.duplicate();
     for (const client of [publisher, subscriber]) {
-      // Without a listener, node-redis rethrows connection errors as uncaught exceptions. The
-      // client reconnects on its own; log and let it.
+    
       client.on('error', (error: unknown) => {
         this.redisLogger.error(`Redis: ${error instanceof Error ? error.message : String(error)}`);
       });

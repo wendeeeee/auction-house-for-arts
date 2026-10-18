@@ -25,7 +25,7 @@ export class UsersController {
   @ApiOkResponse({ schema: toOpenApiSchema(userViewSchema) })
   @ApiUnauthorizedResponse({ description: 'No, a malformed, or an unknown X-Demo-User-Id.' })
   getCurrentUser(@CurrentUser() user: AuthenticatedUser | null): UserView {
-    // @RequireUser() guarantees a user; the null check satisfies the type without a cast.
+   
     if (!user) throw new InvariantViolationError('@RequireUser() admitted an anonymous request.');
     return toUserView(user);
   }

@@ -8,13 +8,9 @@ import {
   userRoom,
 } from './realtime.types';
 
-/**
- * How the auctions module announces a committed change. Callers must publish only after their
- * transaction commits: an announced bid that then rolled back would show viewers a price that
- * never existed. Tests bind the token to a capturing fake, so they need no Socket.IO.
- */
+
 export interface AuctionEventPublisher {
-  /** Fire-and-forget: delivery is best effort, and clients refetch on reconnect. */
+
   publish(announcement: AuctionChangeAnnouncement): void;
 }
 
@@ -22,7 +18,7 @@ export const AUCTION_EVENT_PUBLISHER = Symbol('AUCTION_EVENT_PUBLISHER');
 
 /**
  * Emits through the gateway's Socket.IO server. With the Redis adapter (main.ts), `to(room).emit`
- * reaches that room's sockets on every API instance, not only this one.
+ 
  */
 @Injectable()
 export class SocketIoAuctionEventPublisher implements AuctionEventPublisher {
